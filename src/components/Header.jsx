@@ -1,18 +1,10 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
-import { CartContext } from '../contexts/CartContext';
+// Header Atualizado (Canvas):src/components/Header.jsx
+import { Link, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
 
-function Header({ isLoggedIn, userType, onLogout }) {
-  const { toggleCart, itemCount } = useContext(CartContext);
+// Recebe a nova função 'onToggleOrders'
+function Header({ isLoggedIn, userType, onLogout, onToggleOrders }) {
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    onLogout();
-    navigate('/');
-  };
-
   const showAuthButtons = !['/login', '/cadastro', '/login-entregador', '/cadastro-entregador'].includes(location.pathname);
 
   const renderButtons = () => {
@@ -20,20 +12,18 @@ function Header({ isLoggedIn, userType, onLogout }) {
       if (userType === 'driver') {
         return (
           <div className={styles.userActions}>
-            <Link to="/" className={styles.link}>Minhas Rotas</Link>
-            <Link to="/perfil" className={styles.link}>Perfil</Link>
-            <button onClick={handleLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair</button>
+            <Link to="/" className={`${styles.btn} ${styles.btnSecondary}`}>Minhas Rotas</Link>
+            <Link to="/perfil" className={`${styles.btn} ${styles.btnSecondary}`}>Perfil</Link>
+            <button onClick={onLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair</button>
           </div>
         );
       }
       return (
         <div className={styles.userActions}>
-          <Link to="/pedidos" className={styles.link}>Pedidos</Link>
-          <button onClick={toggleCart} className={styles.cartButton}>
-            Carrinho ({itemCount})
-          </button>
-          <Link to="/perfil" className={styles.link}>Perfil</Link>
-          <button onClick={handleLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair da conta</button>
+          {/* O link de Pedidos agora é um botão que abre o modal */}
+          <button onClick={onToggleOrders} className={`${styles.btn} ${styles.btnSecondary}`}>Pedidos</button>
+          <Link to="/perfil" className={`${styles.btn} ${styles.btnSecondary}`}>Perfil</Link>
+          <button onClick={onLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair da conta</button>
         </div>
       );
     }
@@ -58,4 +48,3 @@ function Header({ isLoggedIn, userType, onLogout }) {
   );
 }
 export default Header;
-

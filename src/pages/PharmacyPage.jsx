@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import styles from './RestaurantPage.module.css'; // Reutilizando os mesmos estilos
-import { pharmacyData } from '../data/pharmacyProducts.js';
-import ProductModal from '../components/ProductModal'; // 1. Importar o Modal
+import styles from './RestaurantPage.module.css'; // Reutilizando estilos
+import { petShopData } from '../data/petShopProducts.js';
+// CORREÇÃO AQUI: O caminho foi ajustado para corresponder à sua estrutura de ficheiros
+import ProductModal from '../components/ProductModal/ProductModal.jsx';
 
-// Componente para o item, agora com lógica para abrir o modal
-function PharmacyItem({ item, onSelect }) {
+// Componente para o item do menu, agora com lógica para abrir o modal
+function MenuItem({ item, onSelect }) {
   return (
     <div className={styles.menuItem} onClick={() => onSelect(item)}>
       <div className={styles.itemInfo}>
@@ -18,20 +19,18 @@ function PharmacyItem({ item, onSelect }) {
   );
 }
 
-function PharmacyPage() {
-  const { _pharmacyId } = useParams();
-  // 2. Adicionar o estado para controlar o item selecionado no pop-up
+function PetShopPage() {
+  const { _petShopId } = useParams();
   const [selectedItem, setSelectedItem] = useState(null);
   
-  const shopData = pharmacyData;
+  const shopData = petShopData;
 
   if (!shopData) {
-    return <div>Farmácia não encontrada.</div>;
+    return <div>Pet Shop não encontrado.</div>;
   }
 
   return (
     <>
-      {/* 3. Renderizar o modal */}
       <ProductModal item={selectedItem} onClose={() => setSelectedItem(null)} />
       
       <header className={styles.restaurantHeader}>
@@ -47,9 +46,8 @@ function PharmacyPage() {
             <section key={category.name} className={styles.category}>
               <h2>{category.name}</h2>
               <div className={styles.itemsGrid}>
-                {/* 4. Usar o novo componente e passar a função para selecionar o item */}
                 {category.items.map(item => (
-                  <PharmacyItem key={item.id} item={item} onSelect={setSelectedItem} />
+                  <MenuItem key={item.id} item={item} onSelect={setSelectedItem} />
                 ))}
               </div>
             </section>
@@ -60,5 +58,4 @@ function PharmacyPage() {
   );
 }
 
-export default PharmacyPage;
-
+export default PetShopPage;

@@ -1,12 +1,12 @@
-// Nova Página de Checkout:src/pages/CheckoutPage.jsx
-import { useState } from 'react';
-import { useCart } from '../contexts/CartContext';
+import { useState, useContext } from 'react'; // 1. Importar useContext
+import { CartContext } from '../contexts/CartContext'; // 2. Importar o CartContext
 import styles from './CheckoutPage.module.css';
 import AddressModal from '../components/AddressModal/AddressModal';
 import PaymentModal from '../components/PaymentModal/PaymentModal';
 
 function CheckoutPage() {
-  const { cartItems, subtotal, deliveryFee, finalTotal } = useCart();
+  // 3. Usar o contexto diretamente em vez do antigo hook
+  const { cartItems, subtotal, deliveryFee, finalTotal } = useContext(CartContext);
   
   const [address, setAddress] = useState('Rua Exemplo, 123 - Centro');
   const [payment, setPayment] = useState({ type: 'PIX' });
@@ -15,8 +15,8 @@ function CheckoutPage() {
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const getPaymentMethodString = () => {
-    if (payment.type === 'Dinheiro') return `Na Entrega (troco para R$ ${payment.changeFor.toFixed(2)})`;
-    if (payment.type === 'Cartão') return `Cartão de Crédito (${payment.cardInfo})`;
+    if (payment.type === 'Dinheiro') return `Na Entrega (troco para R$ ${payment.changeFor?.toFixed(2)})`;
+    if (payment.type === 'Cartão') return `Cartão de Crédito (${payment.cardInfo || '**** 1234'})`;
     return 'PIX';
   };
 

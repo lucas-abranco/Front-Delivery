@@ -1,0 +1,53 @@
+.profileContainer {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+.profileBox {
+  width: 100%;
+  max-width: 600px;
+}
+.profileBox h1 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+.inputGroup { margin-bottom: 1.5rem; }
+.inputGroup label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
+.inputGroup input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+}
+.saveButton {
+  padding: 1rem 2rem;
+  background-color: #272727;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 2rem 0;
+}
+
+/* Base para notificações */
+.notificationSuccess, .notificationError {
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+.notificationSuccess {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.notificationError {
+  background: #ffebee;
+  color: #c62828;
+}

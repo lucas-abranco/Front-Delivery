@@ -1,0 +1,53 @@
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal {
+  background: #f7f7f8;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header h2 { margin: 0; }
+.closeButton { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+
+.content {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+.content section { margin-bottom: 2rem; }
+.content h3 { margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem; }
+
+.orderCard {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.cardHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.cardHeader h4 { margin: 0; }
+.inProgress, .delivered { padding: 0.25rem 0.5rem; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+.inProgress { background: #fff8e1; color: #f57f17; }
+.delivered { background: #e8f5e9; color: #2e7d32; }
+
+.orderItem { display: flex; justify-content: space-between; font-size: 0.9rem; color: #555; }
+.cardBody { padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #f0f0f0; }
+.cardFooter { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
