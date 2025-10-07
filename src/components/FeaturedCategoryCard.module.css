@@ -1,0 +1,33 @@
+.card {
+  background-color: #ffc700; /* O amarelo principal do design */
+  border-radius: 16px;
+  padding: 2rem;
+  flex: 1; /* Faz com que os cards ocupem o espaço disponível igualmente */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Alinha o título em cima e o botão embaixo */
+  min-height: 200px;
+}
+
+.title {
+  color: #272727;
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.button {
+  background-color: #272727;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  align-self: flex-start; /* Alinha o botão à esquerda */
+  transition: background-color 0.2s ease;
+}
+
+.button:hover {
+  background-color: #000;
+}

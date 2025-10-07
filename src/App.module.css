@@ -1,0 +1,56 @@
+.appWrapper {
+  background-color: #f7f7f8; /* Fundo cinza bem claro para o corpo */
+  min-height: 100vh;
+}
+
+.mainContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.heroSection {
+  text-align: center;
+  margin: 3rem 0 5rem 0; /* Aumentei a margem inferior */
+}
+
+.heroTitle {
+  font-size: 3rem;
+  font-weight: 800; /* Usei 800 para um visual mais forte */
+  color: #272727;
+  margin-bottom: 0.5rem;
+}
+
+.heroSubtitle {
+  color: #555;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #272727;
+}
+
+.cardsContainer {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+/* Media Query para responsividade */
+@media (max-width: 768px) {
+  .mainContainer {
+    padding: 1rem;
+  }
+
+  .heroTitle {
+    font-size: 2.2rem;
+  }
+
+  .cardsContainer {
+    flex-direction: column;
+    align-items: center;
+  }
+}

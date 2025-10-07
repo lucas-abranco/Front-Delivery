@@ -1,0 +1,73 @@
+.dashboardContainer {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.header p {
+  color: #555;
+  margin-top: 0.25rem;
+}
+
+.routesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.routeCard {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #eee;
+}
+
+.routeInfo p {
+  margin: 0.25rem 0 0.75rem 0;
+  font-weight: 500;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.routeDetails {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.payment {
+  font-weight: bold;
+}
+
+.acceptButton {
+  background-color: #ffc700;
+  color: #272727;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.acceptButton:hover {
+  transform: scale(1.05);
+}
+

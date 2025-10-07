@@ -1,0 +1,66 @@
+// Nova Página de Checkout:src/pages/CheckoutPage.jsx
+import { useState } from 'react';
+import { useCart } from '../contexts/CartContext';
+import styles from './CheckoutPage.module.css';
+import AddressModal from '../components/AddressModal/AddressModal';
+import PaymentModal from '../components/PaymentModal/PaymentModal';
+
+function CheckoutPage() {
+  const { cartItems, subtotal, deliveryFee, finalTotal } = useCart();
+  
+  const [address, setAddress] = useState('Rua Exemplo, 123 - Centro');
+  const [payment, setPayment] = useState({ type: 'PIX' });
+  
+  const [isAddressModalOpen, setAddressModalOpen] = useState(false);
+  const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+
+  const getPaymentMethodString = () => {
+    if (payment.type === 'Dinheiro') return `Na Entrega (troco para R$ ${payment.changeFor.toFixed(2)})`;
+    if (payment.type === 'Cartão') return `Cartão de Crédito (${payment.cardInfo})`;
+    return 'PIX';
+  };
+
+  return (
+    <>
+      {isAddressModalOpen && <AddressModal currentAddress={address} onClose={() => setAddressModalOpen(false)} onSave={setAddress} />}
+      {isPaymentModalOpen && <PaymentModal onClose={() => setPaymentModalOpen(false)} onSave={setPayment} orderTotal={parseFloat(finalTotal)} />}
+
+      <div className={styles.checkoutContainer}>
+        <h1>Finalizar Pedido</h1>
+        <div className={styles.columns}>
+          <div className={styles.leftColumn}>
+            <div className={styles.card}>
+              <h2>Itens do pedido</h2>
+              {cartItems.map(item => (
+                <div key={item.id} className={styles.orderItem}>
+                  <span>{item.quantity}x {item.name}</span>
+                  <span>R$ {(parseFloat(item.price.replace(',', '.')) * item.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={styles.rightColumn}>
+            <div className={styles.card}>
+              <h3>Endereço de entrega</h3>
+              <p>{address}</p>
+              <button onClick={() => setAddressModalOpen(true)} className={styles.changeButton}>Trocar</button>
+            </div>
+            <div className={styles.card}>
+              <h3>Pagamento</h3>
+              <p>{getPaymentMethodString()}</p>
+              <button onClick={() => setPaymentModalOpen(true)} className={styles.changeButton}>Alterar</button>
+            </div>
+            <div className={styles.card}>
+              <h3>Resumo</h3>
+              <div className={styles.summaryLine}><span>Subtotal</span><span>R$ {subtotal}</span></div>
+              <div className={styles.summaryLine}><span>Taxa de entrega</span><span>R$ {deliveryFee.toFixed(2)}</span></div>
+              <div className={`${styles.summaryLine} ${styles.total}`}><span>Total</span><span>R$ {finalTotal}</span></div>
+            </div>
+            <button className={styles.confirmButton}>Confirmar pedido</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+export default CheckoutPage;

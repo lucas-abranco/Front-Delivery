@@ -1,0 +1,36 @@
+.searchContainer {
+  display: flex;
+  max-width: 600px;
+  width: 100%;
+  margin: 2rem auto 0 auto; /* Espaço acima e centralizado */
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #e2e2e2;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+  overflow: hidden; /* Garante que os filhos não passem da borda arredondada */
+}
+
+.searchInput {
+  flex-grow: 1; /* Faz o input ocupar todo o espaço disponível */
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  color: #333;
+  background: none;
+}
+
+.searchInput::placeholder {
+  color: #999;
+}
+
+.searchButton {
+  background-color: #272727;
+  color: #fff;
+  padding: 1rem 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.searchButton:hover {
+  background-color: #000;
+}

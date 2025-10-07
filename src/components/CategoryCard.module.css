@@ -1,0 +1,36 @@
+.card {
+  background-color: #fff;
+  border-radius: 8px;
+  /* Uma sombra sutil para dar profundidade */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden; /* Garante que nada saia do border-radius */
+  width: 220px; /* Largura fixa para cada card */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-5px); /* Efeito de levantar ao passar o mouse */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.imagePlaceholder {
+  background-color: #f0f0f0; /* Cinza claro para o lugar da imagem */
+  height: 120px;
+}
+
+.content {
+  padding: 1rem;
+}
+
+.title {
+  margin: 0 0 0.25rem 0; /* Remove margem de cima e de baixo */
+  font-size: 1.1rem;
+  color: #272727;
+}
+
+.description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666; /* Cinza mais claro para a descrição */
+}

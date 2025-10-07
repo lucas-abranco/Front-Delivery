@@ -1,0 +1,36 @@
+.cartContainer {
+  background-color: #fff;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  padding: 1.5rem;
+  width: 300px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+.title {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+}
+.cartBody {
+  margin-bottom: 1rem;
+}
+.emptyText {
+  color: #777;
+  font-size: 0.9rem;
+}
+.total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+.checkoutButton {
+  width: 100%;
+  padding: 1rem;
+  background-color: #272727;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+}
