@@ -1,0 +1,58 @@
+.confirmationContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.confirmationBox {
+  width: 100%;
+  max-width: 500px;
+}
+
+.icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e8f5e9; /* Verde claro */
+  color: #2e7d32; /* Verde escuro */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+  margin: 0 auto 1.5rem auto;
+}
+
+.confirmationBox h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.confirmationBox p {
+  color: #555;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+.deliveryInfo {
+  background: #f7f7f8;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.homeButton {
+  display: inline-block;
+  padding: 1rem 2.5rem;
+  background-color: #272727;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+}

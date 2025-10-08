@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CartContext } from '../../contexts/CartContext';
+import { CartContext } from '../contexts/CartContext';
 import styles from './FloatingCart.module.css';
 
 function FloatingCart() {

@@ -1,18 +1,28 @@
-import { useState, useContext } from 'react'; // 1. Importar useContext
-import { CartContext } from '../contexts/CartContext'; // 2. Importar o CartContext
+import { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. Importar o hook de navegação
+import { CartContext } from '../contexts/CartContext';
 import styles from './CheckoutPage.module.css';
 import AddressModal from '../components/AddressModal/AddressModal';
 import PaymentModal from '../components/PaymentModal/PaymentModal';
 
 function CheckoutPage() {
-  // 3. Usar o contexto diretamente em vez do antigo hook
-  const { cartItems, subtotal, deliveryFee, finalTotal } = useContext(CartContext);
+  // 2. Obter a função 'clearCart' do contexto
+  const { cartItems, subtotal, deliveryFee, finalTotal, clearCart } = useContext(CartContext);
+  const navigate = useNavigate(); // 3. Inicializar o hook
   
   const [address, setAddress] = useState('Rua Exemplo, 123 - Centro');
   const [payment, setPayment] = useState({ type: 'PIX' });
   
   const [isAddressModalOpen, setAddressModalOpen] = useState(false);
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+
+  // 4. Esta é a função que é chamada ao clicar no botão
+  const handleConfirmOrder = () => {
+    // No futuro, aqui chamaríamos a API
+    console.log("Pedido confirmado:", { address, payment, items: cartItems, total: finalTotal });
+    clearCart(); // Limpa o carrinho
+    navigate('/pedido-confirmado'); // Navega para a página de confirmação
+  };
 
   const getPaymentMethodString = () => {
     if (payment.type === 'Dinheiro') return `Na Entrega (troco para R$ ${payment.changeFor?.toFixed(2)})`;
@@ -56,7 +66,8 @@ function CheckoutPage() {
               <div className={styles.summaryLine}><span>Taxa de entrega</span><span>R$ {deliveryFee.toFixed(2)}</span></div>
               <div className={`${styles.summaryLine} ${styles.total}`}><span>Total</span><span>R$ {finalTotal}</span></div>
             </div>
-            <button className={styles.confirmButton}>Confirmar pedido</button>
+            {/* 5. O botão chama a função handleConfirmOrder ao ser clicado */}
+            <button onClick={handleConfirmOrder} className={styles.confirmButton}>Confirmar pedido</button>
           </div>
         </div>
       </div>
@@ -64,3 +75,4 @@ function CheckoutPage() {
   );
 }
 export default CheckoutPage;
+

@@ -1,9 +1,8 @@
-// Controlador Principal Atualizado:src/App.jsx
 import { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { CartProvider } from './contexts/CartContext';
 import FloatingCart from './components/FloatingCart';
-import OrdersModal from './components/OrdersModal/OrdersModal'; // Importar o novo modal
+import OrdersModal from './components/OrdersModal/OrdersModal';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -15,7 +14,8 @@ import RestaurantPage from './pages/RestaurantPage';
 import PharmacyPage from './pages/PharmacyPage';
 import PetShopPage from './pages/PetShopPage';
 import CheckoutPage from './pages/CheckoutPage';
-import ProfilePage from './pages/ProfilePage'; // Importar a nova página
+import ProfilePage from './pages/ProfilePage';
+import OrderConfirmationPage from './pages/OrderConfirmationPage'; // Importar a nova página
 import styles from './App.module.css';
 import { initialUsers } from './data/users';
 import { initialDrivers } from './data/drivers';
@@ -25,18 +25,18 @@ function App() {
   const navigate = useNavigate();
   const [users, setUsers] = useState(initialUsers);
   const [drivers, setDrivers] = useState(initialDrivers);
-  const [currentUser, setCurrentUser] = useState(null); // Guardar dados do user logado
+  const [currentUser, setCurrentUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userType, setUserType] = useState(null);
   const [notification, setNotification] = useState('');
-  const [isOrdersModalOpen, setOrdersModalOpen] = useState(false); // Estado para o modal de pedidos
+  const [isOrdersModalOpen, setOrdersModalOpen] = useState(false);
 
   const handleLogin = (email, password) => {
     const userFound = users.find(u => u.email === email && u.password === password);
     if (userFound) {
       setIsLoggedIn(true);
       setUserType('client');
-      setCurrentUser(userFound); // Guarda os dados do utilizador
+      setCurrentUser(userFound);
       navigate('/');
       return true;
     }
@@ -46,25 +46,28 @@ function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserType(null);
-    setCurrentUser(null); // Limpa os dados do utilizador
+    setCurrentUser(null);
     navigate('/');
   };
   
-  // Função para atualizar os dados do utilizador
-  const handleUpdateUser = (updatedData) => {
-    // Não atualiza se a password estiver vazia
-    const dataToUpdate = { ...updatedData };
-    if (!dataToUpdate.password) {
-      delete dataToUpdate.password;
+  const handleUpdateUser = (formData) => {
+    const userToUpdate = users.find(u => u.id === currentUser.id);
+    if (formData.newPassword) {
+      if (userToUpdate.password !== formData.currentPassword) {
+        return false;
+      }
     }
-    
-    // Atualiza o "banco de dados" e o estado do utilizador atual
-    setUsers(users.map(u => u.id === currentUser.id ? { ...u, ...dataToUpdate } : u));
-    setCurrentUser(prev => ({ ...prev, ...dataToUpdate }));
-    console.log("Utilizador atualizado:", users.find(u => u.id === currentUser.id));
+    const updatedData = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.newPassword ? formData.newPassword : userToUpdate.password,
+    };
+    const updatedUsers = users.map(u => u.id === currentUser.id ? { ...u, ...updatedData } : u);
+    setUsers(updatedUsers);
+    setCurrentUser(prev => ({ ...prev, ...updatedData }));
+    return true;
   };
   
-  // ... (outras funções handle sem alterações) ...
   const handleLoginDriver = (email, password) => {
     const driverFound = drivers.find(d => d.email === email && d.password === password);
     if (driverFound) {
@@ -78,21 +81,39 @@ function App() {
   };
 
   const handleSignup = (newUserData) => {
-    if (!isValidCPF(newUserData.cpf) || users.some(u => u.email === newUserData.email || u.cpf === newUserData.cpf)) return false;
+    if (!isValidCPF(newUserData.cpf)) {
+      return { success: false, message: 'O CPF informado é inválido.' };
+    }
+    if (users.some(u => u.cpf === newUserData.cpf)) {
+      return { success: false, message: 'Este CPF já está cadastrado.' };
+    }
+    if (users.some(u => u.email === newUserData.email)) {
+      return { success: false, message: 'Este e-mail já está cadastrado.' };
+    }
+
     const newUser = { id: users.length + 1, ...newUserData };
     setUsers(prev => [...prev, newUser]);
     setNotification('Cliente registado com sucesso! Faça o login.');
     navigate('/login');
-    return true;
+    return { success: true };
   };
 
   const handleSignupDriver = (newDriverData) => {
-    if (!isValidCPF(newDriverData.cpf) || drivers.some(d => d.email === newDriverData.email || d.cpf === newDriverData.cpf)) return false;
+    if (!isValidCPF(newDriverData.cpf)) {
+      return { success: false, message: 'O CPF informado é inválido.' };
+    }
+    if (drivers.some(d => d.cpf === newDriverData.cpf)) {
+      return { success: false, message: 'Este CPF já está cadastrado.' };
+    }
+    if (drivers.some(d => d.email === newDriverData.email)) {
+      return { success: false, message: 'Este e-mail já está cadastrado.' };
+    }
+
     const newDriver = { id: drivers.length + 1, ...newDriverData };
     setDrivers(prev => [...prev, newDriver]);
     setNotification('Registo de entregador realizado! Faça o seu login.');
     navigate('/login-entregador');
-    return true;
+    return { success: true };
   };
 
   return (
@@ -113,9 +134,12 @@ function App() {
           <Route path="/petshop/:petShopId" element={<PetShopPage />} />
           <Route path="/finalizar-pedido" element={isLoggedIn ? <CheckoutPage /> : <LoginPage />} />
           <Route path="/perfil" element={<ProfilePage user={currentUser} onUpdate={handleUpdateUser} />} />
+          {/* ROTA ADICIONADA AQUI */}
+          <Route path="/pedido-confirmado" element={<OrderConfirmationPage />} />
         </Routes>
       </div>
     </CartProvider>
   );
 }
 export default App;
+

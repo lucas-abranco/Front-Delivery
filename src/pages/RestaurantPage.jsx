@@ -4,7 +4,7 @@ import styles from './RestaurantPage.module.css';
 import { CartContext } from '../contexts/CartContext';
 import { pizzeriaMenu } from '../data/pizzeriaMenu.js';
 // CORREÇÃO AQUI: O caminho foi ajustado para corresponder à sua estrutura de ficheiros
-import ProductModal from '../components/ProductModal/ProductModal.jsx';
+import ProductModal from '../components/ProductModal.jsx';
 
 const allRestaurantsData = {
   'pizzaria-bella': pizzeriaMenu,

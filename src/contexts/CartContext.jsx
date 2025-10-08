@@ -6,6 +6,7 @@ export const CartContext = createContext({
   isCartOpen: false,
   addToCart: () => {},
   removeFromCart: () => {},
+  clearCart: () => {}, // Garante que a função está definida
   toggleCart: () => {},
   itemCount: 0,
   subtotal: '0.00',
@@ -35,6 +36,11 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
   const removeFromCart = (itemId) => {
     setCartItems(prevItems => prevItems.filter(item => item.id !== itemId));
   };
+  
+  // Função para limpar o carrinho após a compra
+  const clearCart = () => {
+    setCartItems([]);
+  };
 
   const toggleCart = () => {
     setIsCartOpen(prev => !prev);
@@ -53,6 +59,7 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
     isCartOpen,
     addToCart,
     removeFromCart,
+    clearCart, // Exporta a função
     toggleCart,
     itemCount,
     subtotal,

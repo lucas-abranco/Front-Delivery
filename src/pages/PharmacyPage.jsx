@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import styles from './RestaurantPage.module.css'; // Reutilizando estilos
 import { petShopData } from '../data/petShopProducts.js';
 // CORREÇÃO AQUI: O caminho foi ajustado para corresponder à sua estrutura de ficheiros
-import ProductModal from '../components/ProductModal/ProductModal.jsx';
+import ProductModal from '../components/ProductModal.jsx';
 
 // Componente para o item do menu, agora com lógica para abrir o modal
 function MenuItem({ item, onSelect }) {
