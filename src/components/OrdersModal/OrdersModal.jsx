@@ -1,7 +1,5 @@
 import React from 'react';
-// CORREÇÃO AQUI: Importa o seu próprio ficheiro de estilos
-import styles from './OrdersModal.module.css'; 
-import { ordersData } from '../../data/orders.js';
+import styles from './OrdersModal.module.css';
 
 function OrderCard({ order }) {
   return (
@@ -28,11 +26,13 @@ function OrderCard({ order }) {
   );
 }
 
-function OrdersModal({ isOpen, onClose }) {
+// Recebe a lista de 'orders' como uma propriedade
+function OrdersModal({ isOpen, onClose, orders }) {
   if (!isOpen) return null;
 
-  const currentOrders = ordersData.filter(o => o.status === 'Em andamento');
-  const pastOrders = ordersData.filter(o => o.status === 'Entregue');
+  // Usa a lista de pedidos recebida do App.jsx
+  const currentOrders = orders.filter(o => o.status === 'Em andamento');
+  const pastOrders = orders.filter(o => o.status === 'Entregue');
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -65,3 +65,4 @@ function OrdersModal({ isOpen, onClose }) {
 }
 
 export default OrdersModal;
+

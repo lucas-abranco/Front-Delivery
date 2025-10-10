@@ -1,27 +1,34 @@
 import { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom'; // 1. Importar o hook de navegação
+import { useNavigate } from 'react-router-dom';
 import { CartContext } from '../contexts/CartContext';
 import styles from './CheckoutPage.module.css';
 import AddressModal from '../components/AddressModal/AddressModal';
 import PaymentModal from '../components/PaymentModal/PaymentModal';
 
-function CheckoutPage() {
-  // 2. Obter a função 'clearCart' do contexto
+function CheckoutPage({ onConfirmOrder }) {
   const { cartItems, subtotal, deliveryFee, finalTotal, clearCart } = useContext(CartContext);
-  const navigate = useNavigate(); // 3. Inicializar o hook
+  const navigate = useNavigate();
   
-  const [address, setAddress] = useState('Rua Exemplo, 123 - Centro');
+  const [address, setAddress] = useState('Rua Barão, 321');
   const [payment, setPayment] = useState({ type: 'PIX' });
   
   const [isAddressModalOpen, setAddressModalOpen] = useState(false);
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
 
-  // 4. Esta é a função que é chamada ao clicar no botão
-  const handleConfirmOrder = () => {
-    // No futuro, aqui chamaríamos a API
-    console.log("Pedido confirmado:", { address, payment, items: cartItems, total: finalTotal });
-    clearCart(); // Limpa o carrinho
-    navigate('/pedido-confirmado'); // Navega para a página de confirmação
+  const handleConfirm = () => {
+    const newOrder = {
+      restaurant: 'Restaurante Exemplo',
+      items: cartItems.map(item => ({
+        name: `${item.quantity}x ${item.name}`,
+        price: (parseFloat(item.price.replace(',', '.')) * item.quantity).toFixed(2),
+      })),
+      total: finalTotal,
+      deliveryAddress: address, // Envia o endereço de entrega
+    };
+    
+    onConfirmOrder(newOrder);
+    clearCart();
+    navigate('/pedido-confirmado');
   };
 
   const getPaymentMethodString = () => {
@@ -66,8 +73,7 @@ function CheckoutPage() {
               <div className={styles.summaryLine}><span>Taxa de entrega</span><span>R$ {deliveryFee.toFixed(2)}</span></div>
               <div className={`${styles.summaryLine} ${styles.total}`}><span>Total</span><span>R$ {finalTotal}</span></div>
             </div>
-            {/* 5. O botão chama a função handleConfirmOrder ao ser clicado */}
-            <button onClick={handleConfirmOrder} className={styles.confirmButton}>Confirmar pedido</button>
+            <button onClick={handleConfirm} className={styles.confirmButton}>Confirmar pedido</button>
           </div>
         </div>
       </div>

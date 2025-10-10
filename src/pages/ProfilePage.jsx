@@ -1,15 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './ProfilePage.module.css';
 
 function ProfilePage({ user, onUpdate }) {
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
+    name: '',
+    email: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
-  const [message, setMessage] = useState({ type: '', text: '' }); // Para notificações
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  // Atualiza o formulário quando o utilizador muda (ex: de cliente para entregador)
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name,
+        email: user.email,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -17,20 +30,14 @@ function ProfilePage({ user, onUpdate }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setMessage({ type: '', text: '' }); // Limpa a mensagem
-
-    // Validação no front-end para a nova senha
+    setMessage({ type: '', text: '' });
     if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
       setMessage({ type: 'error', text: 'A nova senha e a confirmação não correspondem.' });
       return;
     }
-
-    // Chama a função onUpdate do App.jsx, que retorna true ou false
     const success = onUpdate(formData);
-
     if (success) {
       setMessage({ type: 'success', text: 'Dados atualizados com sucesso!' });
-      // Limpa os campos de senha após o sucesso
       setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
     } else {
       setMessage({ type: 'error', text: 'A senha atual está incorreta.' });
@@ -45,7 +52,6 @@ function ProfilePage({ user, onUpdate }) {
     <div className={styles.profileContainer}>
       <div className={styles.profileBox}>
         <h1>Meu Perfil</h1>
-        {/* Exibe a notificação de sucesso ou erro */}
         {message.text && <p className={message.type === 'success' ? styles.notificationSuccess : styles.notificationError}>{message.text}</p>}
         
         <form onSubmit={handleSubmit}>
@@ -82,3 +88,4 @@ function ProfilePage({ user, onUpdate }) {
 }
 
 export default ProfilePage;
+

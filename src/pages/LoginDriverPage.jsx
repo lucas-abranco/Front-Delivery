@@ -1,8 +1,9 @@
 import { useState } from 'react';
-// Vamos reutilizar os estilos da página de login do cliente
+import { Link } from 'react-router-dom';
+// Reutilizamos os estilos da página de login do cliente para manter a consistência
 import styles from './LoginPage.module.css';
 
-function LoginDriverPage({ onLoginDriver, onNavigate }) {
+function LoginDriverPage({ onLoginDriver }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -33,9 +34,9 @@ function LoginDriverPage({ onLoginDriver, onNavigate }) {
         </form>
         <p className={styles.signupText}>
           Não é um parceiro? 
-          <button onClick={() => onNavigate('signupDriver')} className={styles.linkButton}>
+          <Link to="/cadastro-entregador" className={styles.linkButton}>
             Cadastre-se
-          </button>
+          </Link>
         </p>
       </div>
     </div>
@@ -43,3 +44,4 @@ function LoginDriverPage({ onLoginDriver, onNavigate }) {
 }
 
 export default LoginDriverPage;
+

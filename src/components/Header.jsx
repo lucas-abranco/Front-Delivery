@@ -1,26 +1,27 @@
-// Header Atualizado (Canvas):src/components/Header.jsx
 import { Link, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
 
-// Recebe a nova função 'onToggleOrders'
 function Header({ isLoggedIn, userType, onLogout, onToggleOrders }) {
   const location = useLocation();
+
+  // Lógica para decidir se os botões de "Entrar" e "Criar conta" devem aparecer
   const showAuthButtons = !['/login', '/cadastro', '/login-entregador', '/cadastro-entregador'].includes(location.pathname);
 
   const renderButtons = () => {
+    // Menu para utilizadores logados
     if (isLoggedIn) {
+      // Menu específico para o entregador
       if (userType === 'driver') {
         return (
           <div className={styles.userActions}>
-            <Link to="/" className={`${styles.btn} ${styles.btnSecondary}`}>Minhas Rotas</Link>
-            <Link to="/perfil" className={`${styles.btn} ${styles.btnSecondary}`}>Perfil</Link>
+            <Link to="/perfil" className={`${styles.btn} ${styles.btnSecondary}`}>Meu Perfil</Link>
             <button onClick={onLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair</button>
           </div>
         );
       }
+      // Menu padrão para o cliente
       return (
         <div className={styles.userActions}>
-          {/* O link de Pedidos agora é um botão que abre o modal */}
           <button onClick={onToggleOrders} className={`${styles.btn} ${styles.btnSecondary}`}>Pedidos</button>
           <Link to="/perfil" className={`${styles.btn} ${styles.btnSecondary}`}>Perfil</Link>
           <button onClick={onLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair da conta</button>
@@ -28,6 +29,16 @@ function Header({ isLoggedIn, userType, onLogout, onToggleOrders }) {
       );
     }
     
+    // Botão especial para a página de login do cliente
+    if (location.pathname === '/login') {
+      return (
+        <Link to="/login-entregador" className={`${styles.btn} ${styles.btnSecondary}`}>
+          É um entregador?
+        </Link>
+      );
+    }
+
+    // Botões padrão para utilizadores deslogados (Home, etc.)
     if (showAuthButtons) {
       return (
         <div className={styles.actions}>
@@ -37,6 +48,7 @@ function Header({ isLoggedIn, userType, onLogout, onToggleOrders }) {
       );
     }
     
+    // Não mostra nada no cabeçalho em páginas de cadastro
     return null;
   };
 
@@ -48,3 +60,4 @@ function Header({ isLoggedIn, userType, onLogout, onToggleOrders }) {
   );
 }
 export default Header;
+

@@ -1,0 +1,72 @@
+.pageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem;
+}
+
+.deliveryCard {
+  width: 100%;
+  max-width: 600px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem 3rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.deliveryCard h1 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+.addressSection {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.address {
+  margin-bottom: 1rem;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #777;
+}
+
+.address p {
+  font-size: 1.1rem;
+  margin: 0.25rem 0;
+}
+
+.arrow {
+  font-size: 1.5rem;
+  text-align: center;
+  color: #ccc;
+  margin: -0.5rem 0;
+}
+
+.statusInfo {
+  background: #f7f7f8;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.actionButton {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background-color: #ffc700;
+  color: #272727;
+}
+
+.confirmButton {
+  background-color: #272727;
+  color: #fff;
+}
