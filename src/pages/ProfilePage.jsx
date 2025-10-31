@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import styles from './ProfilePage.module.css';
+import { useAuth } from '../contexts/AuthContext'; // 1. Importar o hook de Autenticação
 
-function ProfilePage({ user, onUpdate }) {
+// A página agora recebe apenas a função 'onUpdate' do App.jsx
+function ProfilePage({ onUpdate }) {
+  const { user } = useAuth(); // 2. Obter os dados do utilizador logado do AuthContext
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -11,7 +15,7 @@ function ProfilePage({ user, onUpdate }) {
   });
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  // Atualiza o formulário quando o utilizador muda (ex: de cliente para entregador)
+  // 3. Usar o useEffect para preencher o formulário quando os dados do 'user' chegarem
   useEffect(() => {
     if (user) {
       setFormData({
@@ -22,7 +26,7 @@ function ProfilePage({ user, onUpdate }) {
         confirmPassword: '',
       });
     }
-  }, [user]);
+  }, [user]); // Este efeito corre sempre que o objeto 'user' mudar
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,11 +35,14 @@ function ProfilePage({ user, onUpdate }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
+
     if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
       setMessage({ type: 'error', text: 'A nova senha e a confirmação não correspondem.' });
       return;
     }
-    const success = onUpdate(formData);
+
+    const success = onUpdate(formData); // A lógica de 'onUpdate' ainda é gerida pelo App.jsx
+
     if (success) {
       setMessage({ type: 'success', text: 'Dados atualizados com sucesso!' });
       setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
@@ -45,7 +52,7 @@ function ProfilePage({ user, onUpdate }) {
   };
 
   if (!user) {
-    return <div>Você precisa estar logado para ver esta página.</div>;
+    return <div>A carregar dados do perfil...</div>;
   }
 
   return (

@@ -1,21 +1,18 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import styles from './RestaurantPage.module.css';
 import { CartContext } from '../contexts/CartContext';
-import { pizzeriaMenu } from '../data/pizzeriaMenu.js';
-// CORREÇÃO AQUI: O caminho foi ajustado para corresponder à sua estrutura de ficheiros
 import ProductModal from '../components/ProductModal.jsx';
 
-const allRestaurantsData = {
-  'pizzaria-bella': pizzeriaMenu,
-};
+// URL da nossa API de back-end
+const API_URL = 'http://localhost:3000';
 
-// O item do menu agora tem uma função para ser selecionado
+// Componente para um item individual do menu
 function MenuItem({ item, onSelect }) {
-    // Adicionamos a lógica do carrinho aqui também para o botão '+'
-    const { addToCart } = useContext(CartContext);
+    const { addToCart } = useContext(CartContext); // Obtém a função de adicionar ao carrinho
+    
     return (
-        // Clicar no card abre o modal
+        // Clicar no card inteiro abre o modal
         <div className={styles.menuItem} onClick={() => onSelect(item)}>
             <div className={styles.itemInfo}>
                 <h4>{item.name}</h4>
@@ -23,7 +20,7 @@ function MenuItem({ item, onSelect }) {
                 <span>R$ {item.price}</span>
             </div>
             <div className={styles.itemImagePlaceholder}>
-                {/* Botão para adicionar diretamente ao carrinho sem abrir o modal */}
+                {/* Botão para adicionar diretamente ao carrinho */}
                 <button 
                     onClick={(e) => { 
                         e.stopPropagation(); // Impede que o clique no botão abra o modal
@@ -38,38 +35,67 @@ function MenuItem({ item, onSelect }) {
     );
 }
 
+// Componente principal da página do restaurante
 function RestaurantPage() {
-  const { restaurantId } = useParams();
-  // Estado para controlar qual item está no pop-up
-  const [selectedItem, setSelectedItem] = useState(null);
-  const menuData = allRestaurantsData[restaurantId];
+  const { restaurantId } = useParams(); // Pega o ID da URL (ex: 'pizzaria-bella')
+  const [selectedItem, setSelectedItem] = useState(null); // Controla o item no modal
+  const [storeData, setStoreData] = useState(null); // Guarda os dados vindos da API
+  const [loading, setLoading] = useState(true); // Controla o estado de carregamento
 
-  if (!menuData) {
-    return <div>Restaurante não encontrado.</div>;
+  // Efeito para buscar os dados da API quando a página carrega
+  useEffect(() => {
+    const fetchStoreMenu = async () => {
+      setLoading(true);
+      try {
+        // Chama a rota do back-end que criámos
+        const response = await fetch(`${API_URL}/stores/${restaurantId}/menu`);
+        if (!response.ok) {
+          throw new Error('Falha ao buscar dados do restaurante.');
+        }
+        const data = await response.json();
+        setStoreData(data); // Guarda os dados no estado
+      } catch (error) {
+        console.error(error.message);
+      }
+      setLoading(false);
+    };
+
+    fetchStoreMenu();
+  }, [restaurantId]); // Este efeito corre sempre que o ID do restaurante na URL mudar
+
+  if (loading) {
+    return <div style={{padding: '2rem'}}>A carregar cardápio...</div>;
+  }
+
+  if (!storeData) {
+    return <div style={{padding: '2rem'}}>Restaurante não encontrado.</div>;
   }
 
   return (
     <>
-      {/* Renderiza o Modal com o item selecionado */}
+      {/* O Modal do produto (pop-up) */}
       <ProductModal item={selectedItem} onClose={() => setSelectedItem(null)} />
 
+      {/* Cabeçalho com os dados do restaurante */}
       <header className={styles.restaurantHeader}>
         <div className={styles.headerContent}>
           <div>
-            <h1>{menuData.restaurantName}</h1>
-            <p>{`Tempo médio: ${menuData.deliveryTime} - Taxa: ${menuData.deliveryFee}`}</p>
+            <h1>{storeData.name}</h1>
+            <p>{`Tempo médio: ${storeData.deliveryTime} - Taxa: R$ ${storeData.deliveryFee}`}</p>
           </div>
         </div>
       </header>
 
+      {/* Conteúdo principal com o menu */}
       <main className={styles.mainContent}>
         <div className={styles.menuSection}>
           <input type="text" placeholder="Buscar no cardápio" className={styles.menuSearch} />
-          {menuData.categories.map(category => (
+          {/* Itera sobre as categorias do menu vindas da API */}
+          {storeData.menu.map(category => (
             <section key={category.name} className={styles.category}>
               <h2>{category.name}</h2>
               <div className={styles.itemsGrid}>
-                {/* Passa a função para selecionar o item */}
+                {/* Itera sobre os itens de cada categoria */}
                 {category.items.map(item => (
                   <MenuItem key={item.id} item={item} onSelect={setSelectedItem} />
                 ))}

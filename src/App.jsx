@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
-import FloatingCart from './components/FloatingCart';
+// CORREÇÃO: O caminho foi ajustado para corresponder à sua estrutura de ficheiros
+import FloatingCart from './components/FloatingCart.jsx'; 
 import OrdersModal from './components/OrdersModal/OrdersModal';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
@@ -11,6 +13,7 @@ import SignupPage from './pages/SignupPage';
 import SignupDriverPage from './pages/SignupDriverPage';
 import DriverDashboardPage from './pages/DriverDashboardPage';
 import CurrentDeliveryPage from './pages/CurrentDeliveryPage';
+import RestaurantListPage from './pages/RestaurantListPage';
 import RestaurantPage from './pages/RestaurantPage';
 import PharmacyPage from './pages/PharmacyPage';
 import PetShopPage from './pages/PetShopPage';
@@ -18,165 +21,151 @@ import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
 import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import styles from './App.module.css';
-import { initialUsers } from './data/users';
-import { initialDrivers } from './data/drivers';
-import { ordersData } from './data/orders';
-import { isValidCPF } from './utils/validators';
+// REMOVIDO: As importações de 'ordersData' e 'restaurants' foram apagadas.
+
+// Define a URL base da nossa API de back-end
+const API_URL = 'http://localhost:3000';
 
 function App() {
+  const { isLoggedIn, userType, user, token } = useAuth();
   const navigate = useNavigate();
-  const [users, setUsers] = useState(initialUsers);
-  const [drivers, setDrivers] = useState(initialDrivers);
-  const [orders, setOrders] = useState(ordersData);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userType, setUserType] = useState(null);
+  
   const [notification, setNotification] = useState('');
+  const [orders, setOrders] = useState([]); // Começa vazio, será preenchido pela API
   const [isOrdersModalOpen, setOrdersModalOpen] = useState(false);
 
-  const handleLogin = (email, password) => {
-    const userFound = users.find(u => u.email === email && u.password === password);
-    if (userFound) {
-      setIsLoggedIn(true);
-      setUserType('client');
-      setCurrentUser(userFound);
-      navigate('/');
-      return true;
-    }
-    return false;
-  };
-  
-  const handleLoginDriver = (email, password) => {
-    const driverFound = drivers.find(d => d.email === email && d.password === password);
-    if (driverFound) {
-      setIsLoggedIn(true);
-      setUserType('driver');
-      setCurrentUser(driverFound);
-      navigate('/');
-      return true;
-    }
-    return false;
-  };
+  // --- LÓGICA DE DADOS (API) ---
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserType(null);
-    setCurrentUser(null);
-    navigate('/');
-  };
-  
-  const handleUpdateUser = (formData) => {
-    const userToUpdate = userType === 'client' 
-      ? users.find(u => u.id === currentUser.id)
-      : drivers.find(d => d.id === currentUser.id);
-
-    if (formData.newPassword && userToUpdate.password !== formData.currentPassword) {
-      return false;
-    }
-    const updatedData = {
-      name: formData.name,
-      email: formData.email,
-      password: formData.newPassword ? formData.newPassword : userToUpdate.password,
-    };
+  // Função para buscar os pedidos (usada pelo Cliente e Entregador)
+  const fetchOrders = async () => {
+    if (!token) return;
     
+    let url = '';
     if (userType === 'client') {
-      setUsers(users.map(u => u.id === currentUser.id ? { ...u, ...updatedData } : u));
+      url = `${API_URL}/orders`; // Rota de pedidos do cliente
+    } else if (userType === 'driver') {
+      // Rota de pedidos disponíveis para o entregador
+      url = `${API_URL}/orders/available`; 
     } else {
-      setDrivers(drivers.map(d => d.id === currentUser.id ? { ...d, ...updatedData } : d));
+      return; // Se não for nenhum dos dois, não faz nada
     }
-    setCurrentUser(prev => ({ ...prev, ...updatedData }));
-    return true;
+
+    try {
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Falha ao buscar pedidos.');
+      const data = await response.json();
+      setOrders(data);
+    } catch (error) {
+      console.error(error.message);
+    }
   };
 
-  const handleSignup = (newUserData) => {
-    if (!isValidCPF(newUserData.cpf)) {
-      return { success: false, message: 'O CPF informado é inválido.' };
+  // Efeito que busca os pedidos corretos quando o utilizador logado muda
+  useEffect(() => {
+    if (isLoggedIn && token) {
+      fetchOrders();
+    } else {
+      setOrders([]); // Limpa os pedidos ao fazer logout
     }
-    if (users.some(u => u.cpf === newUserData.cpf)) {
-      return { success: false, message: 'Este CPF já está cadastrado.' };
-    }
-    if (users.some(u => u.email === newUserData.email)) {
-      return { success: false, message: 'Este e-mail já está cadastrado.' };
-    }
-    const newUser = { id: `user-${users.length + 1}`, ...newUserData };
-    setUsers(prev => [...prev, newUser]);
-    setNotification('Cliente registado com sucesso! Faça o login.');
-    navigate('/login');
-    return { success: true };
-  };
+  }, [isLoggedIn, token, userType]);
 
-  const handleSignupDriver = (newDriverData) => {
-    if (!isValidCPF(newDriverData.cpf)) {
-      return { success: false, message: 'O CPF informado é inválido.' };
-    }
-    if (drivers.some(d => d.cpf === newDriverData.cpf)) {
-      return { success: false, message: 'Este CPF já está cadastrado.' };
-    }
-    if (drivers.some(d => d.email === newDriverData.email)) {
-      return { success: false, message: 'Este e-mail já está cadastrado.' };
-    }
-    const newDriver = { id: `driver-${drivers.length + 1}`, ...newDriverData };
-    setDrivers(prev => [...prev, newDriver]);
-    setNotification('Registo de entregador realizado! Faça o seu login.');
-    navigate('/login-entregador');
-    return { success: true };
-  };
 
-  const handleConfirmOrder = (order) => {
-    const newOrder = {
-      ...order,
-      id: `PEDIDO-00${orders.length + 1}`,
-      status: 'Em andamento',
-      date: new Date().toLocaleDateString('pt-BR'),
-      driverId: null,
-      userId: currentUser?.id,
-      pickupAddress: 'Avenida Brasil, 100', // Endereço de recolha fixo (pode ser melhorado)
-    };
-    setOrders(prevOrders => [newOrder, ...prevOrders]);
+  // Função para criar um novo pedido via API
+  const handleConfirmOrder = async (orderData) => {
+    try {
+      const response = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderData),
+      });
+      if (!response.ok) throw new Error('Falha ao criar pedido.');
+      await response.json();
+      fetchOrders(); // Atualiza a lista de pedidos após a criação
+    } catch (error) {
+      console.error(error.message);
+    }
   };
   
-  const handleAcceptRoute = (order) => {
-    setOrders(prevOrders =>
-      prevOrders.map(o =>
-        o.id === order.id ? { ...o, status: 'Em rota de entrega', driverId: currentUser.id } : o
-      )
-    );
+  // Função para aceitar uma rota via API
+  const handleAcceptRoute = async (orderId) => {
+     try {
+      await fetch(`${API_URL}/orders/${orderId}/accept`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      alert('Rota aceite!');
+      fetchOrders(); // Atualiza a lista de pedidos disponíveis
+    } catch (error) {
+      console.error(error.message);
+    }
   };
 
-  const handleCompleteDelivery = (orderId) => {
-    setOrders(prevOrders =>
-      prevOrders.map(o =>
-        o.id === orderId ? { ...o, status: 'Entregue' } : o
-      )
-    );
+  // Função para completar uma entrega via API
+  const handleCompleteDelivery = async (orderId) => {
+    try {
+      await fetch(`${API_URL}/orders/${orderId}/complete`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      alert('Entrega concluída!');
+      fetchOrders(); // Atualiza a lista (para voltar ao Dashboard)
+    } catch (error) {
+      console.error(error.message);
+    }
   };
   
+  // Define qual página o entregador vê
   const renderDriverPage = () => {
-    const activeDelivery = orders.find(o => o.driverId === currentUser?.id && o.status === 'Em rota de entrega');
+    // Procura na lista de pedidos (vinda da API) se há uma entrega ativa
+    const activeDelivery = orders.find(o => o.driverId === user?.id && o.status === 'Em rota de entrega');
+    
     if (activeDelivery) {
-      return <CurrentDeliveryPage delivery={activeDelivery} onCompleteDelivery={handleCompleteDelivery} />;
+      return (
+        <CurrentDeliveryPage 
+          delivery={activeDelivery} 
+          onCompleteDelivery={handleCompleteDelivery} 
+        />
+      );
     }
-    return <DriverDashboardPage orders={orders} onAcceptRoute={handleAcceptRoute} />;
+    
+    // Passa os pedidos disponíveis (da API) para o painel
+    return (
+      <DriverDashboardPage 
+        orders={orders} 
+        onAcceptRoute={handleAcceptRoute} 
+      />
+    );
   };
 
   return (
     <CartProvider isLoggedIn={isLoggedIn} setNotification={setNotification}>
       <div className={styles.appWrapper}>
-        <Header isLoggedIn={isLoggedIn} userType={userType} onLogout={handleLogout} onToggleOrders={() => setOrdersModalOpen(true)} />
+        <Header onToggleOrders={() => { fetchOrders(); setOrdersModalOpen(true); }} />
         <FloatingCart />
-        <OrdersModal isOpen={isOrdersModalOpen} onClose={() => setOrdersModalOpen(false)} orders={orders.filter(o => o.userId === currentUser?.id)} />
+        <OrdersModal 
+          isOpen={isOrdersModalOpen} 
+          onClose={() => setOrdersModalOpen(false)} 
+          orders={orders.filter(o => o.userId === user?.id)}
+        />
         
         <Routes>
           <Route path="/" element={isLoggedIn && userType === 'driver' ? renderDriverPage() : <HomePage />} />
-          <Route path="/login" element={<LoginPage onLogin={handleLogin} notification={notification} setNotification={setNotification} />} />
-          <Route path="/login-entregador" element={<LoginDriverPage onLoginDriver={handleLoginDriver} />} />
-          <Route path="/cadastro" element={<SignupPage onSignup={handleSignup} />} />
-          <Route path="/cadastro-entregador" element={<SignupDriverPage onSignupDriver={handleSignupDriver} />} />
+          <Route path="/login" element={<LoginPage notification={notification} setNotification={setNotification} />} />
+          <Route path="/login-entregador" element={<LoginDriverPage />} />
+          <Route path="/cadastro" element={<SignupPage />} />
+          <Route path="/cadastro-entregador" element={<SignupDriverPage />} />
+          <Route path="/restaurantes/:category" element={<RestaurantListPage />} />
+          <Route path="/restaurantes" element={<RestaurantListPage />} />
           <Route path="/restaurante/:restaurantId" element={<RestaurantPage />} />
           <Route path="/farmacia/:pharmacyId" element={<PharmacyPage />} />
           <Route path="/petshop/:petShopId" element={<PetShopPage />} />
           <Route path="/finalizar-pedido" element={isLoggedIn ? <CheckoutPage onConfirmOrder={handleConfirmOrder} /> : <LoginPage />} />
-          <Route path="/perfil" element={<ProfilePage user={currentUser} onUpdate={handleUpdateUser} />} />
+          <Route path="/perfil" element={isLoggedIn ? <ProfilePage /> : <LoginPage />} />
           <Route path="/pedido-confirmado" element={<OrderConfirmationPage />} />
         </Routes>
       </div>

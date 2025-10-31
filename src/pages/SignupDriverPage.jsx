@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import styles from './SignupPage.module.css'; // Reutilizaremos o mesmo estilo
-import { isValidCPF } from '../utils/validators';
+import { useNavigate } from 'react-router-dom';
+import styles from './SignupPage.module.css'; // Reutiliza o estilo da página de cadastro do cliente
+import { useAuth } from '../contexts/AuthContext'; // 1. Importar o hook de Autenticação
 
-function SignupDriverPage({ onSignupDriver }) {
+function SignupDriverPage() {
   const [formData, setFormData] = useState({
     name: '',
     cpf: '',
@@ -17,16 +18,18 @@ function SignupDriverPage({ onSignupDriver }) {
   });
 
   const [errors, setErrors] = useState({});
+  const { registerDriver } = useAuth(); // 2. Obter a função específica de registo de entregador
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Validação simples no front-end
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name) newErrors.name = "O nome completo é obrigatório.";
-    if (!isValidCPF(formData.cpf)) newErrors.cpf = "O CPF informado não é válido.";
     if (!formData.email) newErrors.email = "O e-mail é obrigatório.";
     if (formData.email !== formData.confirmEmail) newErrors.confirmEmail = "Os e-mails não correspondem.";
     if (formData.password.length < 8) newErrors.password = "A senha deve ter no mínimo 8 caracteres.";
@@ -34,7 +37,7 @@ function SignupDriverPage({ onSignupDriver }) {
     return newErrors;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const formErrors = validateForm();
     if (Object.keys(formErrors).length > 0) {
@@ -42,10 +45,29 @@ function SignupDriverPage({ onSignupDriver }) {
       return;
     }
 
-    setErrors({});
-    const signupSuccessful = onSignupDriver(formData);
-    if (!signupSuccessful) {
-      setErrors({ form: "Este e-mail ou CPF já está cadastrado. Tente outro." });
+    setErrors({}); // Limpa erros antigos
+
+    try {
+      // 3. Prepara os dados e chama a função 'registerDriver' do AuthContext
+      const dataToSubmit = {
+        name: formData.name,
+        cpf: formData.cpf,
+        phone: formData.phone,
+        email: formData.email,
+        password: formData.password,
+        vehicleType: formData.vehicleType,
+        licensePlate: formData.licensePlate,
+        cnh: formData.cnh,
+      };
+      
+      await registerDriver(dataToSubmit);
+      
+      // Se o registo for bem-sucedido, redireciona para a página de login do entregador
+      navigate('/login-entregador');
+
+    } catch (err) {
+      // 4. Se a API retornar um erro (ex: 409 Conflict, CPF já existe)
+      setErrors({ form: err.message || "Falha ao tentar cadastrar." });
     }
   };
 
@@ -55,12 +77,12 @@ function SignupDriverPage({ onSignupDriver }) {
         <h1 className={styles.title}>Cadastro de Parceiro Entregador</h1>
         {errors.form && <p className={styles.error}>{errors.form}</p>}
         <form onSubmit={handleSubmit} noValidate>
+          {/* --- Campos de Dados Pessoais --- */}
           <div className={styles.inputGroup}>
             <label htmlFor="name">Nome completo</label>
             <input type="text" name="name" placeholder="Seu nome completo" value={formData.name} onChange={handleChange} required />
             {errors.name && <p className={styles.fieldError}>{errors.name}</p>}
           </div>
-
           <div className={styles.row}>
             <div className={styles.inputGroup}>
               <label htmlFor="cpf">CPF</label>
@@ -73,18 +95,17 @@ function SignupDriverPage({ onSignupDriver }) {
             </div>
           </div>
 
+          {/* --- Campos de Autenticação --- */}
           <div className={styles.inputGroup}>
             <label htmlFor="email">E-mail</label>
             <input type="email" name="email" placeholder="email@exemplo.com" value={formData.email} onChange={handleChange} required />
             {errors.email && <p className={styles.fieldError}>{errors.email}</p>}
           </div>
-
           <div className={styles.inputGroup}>
             <label htmlFor="confirmEmail">Confirmar e-mail</label>
             <input type="email" name="confirmEmail" placeholder="repita seu e-mail" value={formData.confirmEmail} onChange={handleChange} required />
             {errors.confirmEmail && <p className={styles.fieldError}>{errors.confirmEmail}</p>}
           </div>
-
           <div className={styles.row}>
             <div className={styles.inputGroup}>
               <label htmlFor="password">Senha</label>
@@ -98,6 +119,7 @@ function SignupDriverPage({ onSignupDriver }) {
             </div>
           </div>
 
+          {/* --- Campos do Veículo --- */}
           <div className={styles.row}>
              <div className={styles.inputGroup}>
               <label htmlFor="vehicleType">Tipo de veículo</label>
@@ -108,7 +130,6 @@ function SignupDriverPage({ onSignupDriver }) {
               <input type="text" name="licensePlate" placeholder="ABC-1D23" value={formData.licensePlate} onChange={handleChange} />
             </div>
           </div>
-
           <div className={styles.inputGroup}>
             <label htmlFor="cnh">CNH (se motorizado)</label>
             <input type="text" name="cnh" placeholder="número ou anexo" value={formData.cnh} onChange={handleChange} />
@@ -122,3 +143,4 @@ function SignupDriverPage({ onSignupDriver }) {
 }
 
 export default SignupDriverPage;
+

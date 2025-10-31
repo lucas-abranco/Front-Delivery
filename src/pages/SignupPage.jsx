@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './SignupPage.module.css';
-// Importamos a função de validação de CPF que já temos
-import { isValidCPF } from '../utils/validators';
+import { useAuth } from '../contexts/AuthContext'; // 1. Importar o hook de Autenticação
 
-function SignupPage({ onSignup }) {
+function SignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     cpf: '',
@@ -14,47 +14,58 @@ function SignupPage({ onSignup }) {
     confirmPassword: '',
   });
 
-  // O estado de erros agora guardará uma mensagem para cada campo
   const [errors, setErrors] = useState({});
+  const { register } = useAuth(); // 2. Obter a função 'register' do AuthContext
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Função para validar todos os campos do formulário
+  // Validação simples no front-end
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.name) newErrors.name = "O nome completo é obrigatório.";
-    if (!formData.cpf) newErrors.cpf = "O CPF é obrigatório.";
-    else if (!isValidCPF(formData.cpf)) newErrors.cpf = "O CPF informado não é válido.";
-    if (!formData.phone) newErrors.phone = "O telefone é obrigatório.";
-    if (!formData.email) newErrors.email = "O e-mail é obrigatório.";
-    if (formData.email !== formData.confirmEmail) newErrors.confirmEmail = "Os e-mails não correspondem.";
-    if (formData.password.length < 8) newErrors.password = "A senha deve ter no mínimo 8 caracteres.";
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "As senhas não correspondem.";
-    
+    if (formData.email !== formData.confirmEmail) {
+      newErrors.confirmEmail = "Os e-mails não correspondem.";
+    }
+    if (formData.password.length < 8) {
+      newErrors.password = "A senha deve ter no mínimo 8 caracteres.";
+    }
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "As senhas não correspondem.";
+    }
     return newErrors;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const formErrors = validateForm();
-    
-    // Se houver erros de validação no front-end, exibe-os e para
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
       return;
     }
 
-    // Se a validação do front-end passar, limpa os erros e tenta o cadastro
-    setErrors({});
-    const signupSuccessful = onSignup(formData);
-    
-    // Se onSignup retornar false (e-mail já existe), exibe um erro geral
-    if (!signupSuccessful) {
-      setErrors({ form: "Este e-mail já está cadastrado. Tente outro." });
+    setErrors({}); // Limpa erros antigos
+
+    try {
+      // 3. Chamar a função 'register' do AuthContext, que fala com a API
+      const dataToSubmit = {
+        name: formData.name,
+        cpf: formData.cpf,
+        phone: formData.phone,
+        email: formData.email,
+        password: formData.password,
+      };
+      
+      await register(dataToSubmit);
+      
+      // Se o registo for bem-sucedido, redireciona para a página de login
+      navigate('/login');
+
+    } catch (err) {
+      // 4. Se a API retornar um erro (ex: 409 Conflict), exibe a mensagem
+      setErrors({ form: err.message || "Falha ao tentar cadastrar." });
     }
   };
 
@@ -67,26 +78,22 @@ function SignupPage({ onSignup }) {
           <div className={styles.inputGroup}>
             <label htmlFor="name">Nome completo</label>
             <input type="text" id="name" name="name" placeholder="Seu nome completo" value={formData.name} onChange={handleChange} required />
-            {errors.name && <p className={styles.fieldError}>{errors.name}</p>}
           </div>
 
           <div className={styles.row}>
             <div className={styles.inputGroup}>
               <label htmlFor="cpf">CPF</label>
               <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" value={formData.cpf} onChange={handleChange} required />
-              {errors.cpf && <p className={styles.fieldError}>{errors.cpf}</p>}
             </div>
             <div className={styles.inputGroup}>
               <label htmlFor="phone">Telefone</label>
               <input type="tel" id="phone" name="phone" placeholder="(00) 00000-0000" value={formData.phone} onChange={handleChange} required />
-              {errors.phone && <p className={styles.fieldError}>{errors.phone}</p>}
             </div>
           </div>
 
           <div className={styles.inputGroup}>
             <label htmlFor="email">E-mail</label>
             <input type="email" id="email" name="email" placeholder="email@exemplo.com" value={formData.email} onChange={handleChange} required />
-            {errors.email && <p className={styles.fieldError}>{errors.email}</p>}
           </div>
 
           <div className={styles.inputGroup}>

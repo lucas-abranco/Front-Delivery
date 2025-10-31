@@ -1,35 +1,48 @@
-import { Link, useLocation } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
+import { useAuth } from '../contexts/AuthContext';
+import { CartContext } from '../contexts/CartContext';
 
-function Header({ isLoggedIn, userType, onLogout, onToggleOrders }) {
+function Header({ onToggleOrders }) {
+  const { isLoggedIn, userType, logout } = useAuth();
+  const { toggleCart, itemCount } = useContext(CartContext);
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // Lógica para decidir se os botões de "Entrar" e "Criar conta" devem aparecer
+  const handleLogout = () => {
+    logout();
+    navigate('/'); // Redireciona para a home após o logout
+  };
+
+  // Lógica para esconder os botões de autenticação (Entrar, Criar conta)
   const showAuthButtons = !['/login', '/cadastro', '/login-entregador', '/cadastro-entregador'].includes(location.pathname);
 
   const renderButtons = () => {
-    // Menu para utilizadores logados
+    // 1. Se o utilizador estiver logado
     if (isLoggedIn) {
-      // Menu específico para o entregador
       if (userType === 'driver') {
         return (
           <div className={styles.userActions}>
-            <Link to="/perfil" className={`${styles.btn} ${styles.btnSecondary}`}>Meu Perfil</Link>
-            <button onClick={onLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair</button>
+            <Link to="/" className={`${styles.btn} ${styles.btnSecondary}`}>Minhas Rotas</Link>
+            <Link to="/perfil" className={`${styles.btn} ${styles.btnSecondary}`}>Perfil</Link>
+            <button onClick={handleLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair</button>
           </div>
         );
       }
-      // Menu padrão para o cliente
       return (
         <div className={styles.userActions}>
           <button onClick={onToggleOrders} className={`${styles.btn} ${styles.btnSecondary}`}>Pedidos</button>
+          <button onClick={toggleCart} className={styles.cartButton}>
+            Carrinho ({itemCount})
+          </button>
           <Link to="/perfil" className={`${styles.btn} ${styles.btnSecondary}`}>Perfil</Link>
-          <button onClick={onLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair da conta</button>
+          <button onClick={handleLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair da conta</button>
         </div>
       );
     }
     
-    // Botão especial para a página de login do cliente
+    // 2. CORREÇÃO: Se estiver na página de login do CLIENTE
     if (location.pathname === '/login') {
       return (
         <Link to="/login-entregador" className={`${styles.btn} ${styles.btnSecondary}`}>
@@ -37,8 +50,8 @@ function Header({ isLoggedIn, userType, onLogout, onToggleOrders }) {
         </Link>
       );
     }
-
-    // Botões padrão para utilizadores deslogados (Home, etc.)
+    
+    // 3. Se estiver na Home (ou noutra página pública)
     if (showAuthButtons) {
       return (
         <div className={styles.actions}>
@@ -48,7 +61,7 @@ function Header({ isLoggedIn, userType, onLogout, onToggleOrders }) {
       );
     }
     
-    // Não mostra nada no cabeçalho em páginas de cadastro
+    // 4. Se estiver noutra página de autenticação (ex: /cadastro), não mostra nada.
     return null;
   };
 
