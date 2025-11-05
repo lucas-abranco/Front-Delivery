@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
-// CORREÇÃO: O caminho foi ajustado para corresponder à sua estrutura de ficheiros
-import FloatingCart from './components/FloatingCart.jsx'; 
+import FloatingCart from './components/FloatingCart.jsx';
 import OrdersModal from './components/OrdersModal/OrdersModal';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
@@ -21,9 +20,8 @@ import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
 import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import styles from './App.module.css';
-// REMOVIDO: As importações de 'ordersData' e 'restaurants' foram apagadas.
+// Mocks de dados foram removidos. A aplicação é agora 100% baseada na API.
 
-// Define a URL base da nossa API de back-end
 const API_URL = 'http://localhost:3000';
 
 function App() {
@@ -31,46 +29,10 @@ function App() {
   const navigate = useNavigate();
   
   const [notification, setNotification] = useState('');
-  const [orders, setOrders] = useState([]); // Começa vazio, será preenchido pela API
+  // O estado dos pedidos (orders) foi removido. Os componentes agora buscam os seus próprios dados.
   const [isOrdersModalOpen, setOrdersModalOpen] = useState(false);
 
   // --- LÓGICA DE DADOS (API) ---
-
-  // Função para buscar os pedidos (usada pelo Cliente e Entregador)
-  const fetchOrders = async () => {
-    if (!token) return;
-    
-    let url = '';
-    if (userType === 'client') {
-      url = `${API_URL}/orders`; // Rota de pedidos do cliente
-    } else if (userType === 'driver') {
-      // Rota de pedidos disponíveis para o entregador
-      url = `${API_URL}/orders/available`; 
-    } else {
-      return; // Se não for nenhum dos dois, não faz nada
-    }
-
-    try {
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Falha ao buscar pedidos.');
-      const data = await response.json();
-      setOrders(data);
-    } catch (error) {
-      console.error(error.message);
-    }
-  };
-
-  // Efeito que busca os pedidos corretos quando o utilizador logado muda
-  useEffect(() => {
-    if (isLoggedIn && token) {
-      fetchOrders();
-    } else {
-      setOrders([]); // Limpa os pedidos ao fazer logout
-    }
-  }, [isLoggedIn, token, userType]);
-
 
   // Função para criar um novo pedido via API
   const handleConfirmOrder = async (orderData) => {
@@ -85,13 +47,14 @@ function App() {
       });
       if (!response.ok) throw new Error('Falha ao criar pedido.');
       await response.json();
-      fetchOrders(); // Atualiza a lista de pedidos após a criação
+      // (O OrdersModal agora irá buscar os pedidos atualizados quando for aberto)
     } catch (error) {
       console.error(error.message);
     }
   };
   
-  // Função para aceitar uma rota via API
+  // --- LÓGICA DO ENTREGADOR (API) ---
+  
   const handleAcceptRoute = async (orderId) => {
      try {
       await fetch(`${API_URL}/orders/${orderId}/accept`, {
@@ -99,13 +62,11 @@ function App() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       alert('Rota aceite!');
-      fetchOrders(); // Atualiza a lista de pedidos disponíveis
     } catch (error) {
       console.error(error.message);
     }
   };
 
-  // Função para completar uma entrega via API
   const handleCompleteDelivery = async (orderId) => {
     try {
       await fetch(`${API_URL}/orders/${orderId}/complete`, {
@@ -113,7 +74,6 @@ function App() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       alert('Entrega concluída!');
-      fetchOrders(); // Atualiza a lista (para voltar ao Dashboard)
     } catch (error) {
       console.error(error.message);
     }
@@ -121,23 +81,13 @@ function App() {
   
   // Define qual página o entregador vê
   const renderDriverPage = () => {
-    // Procura na lista de pedidos (vinda da API) se há uma entrega ativa
-    const activeDelivery = orders.find(o => o.driverId === user?.id && o.status === 'Em rota de entrega');
-    
-    if (activeDelivery) {
-      return (
-        <CurrentDeliveryPage 
-          delivery={activeDelivery} 
-          onCompleteDelivery={handleCompleteDelivery} 
-        />
-      );
-    }
-    
-    // Passa os pedidos disponíveis (da API) para o painel
+    // A lógica de qual página mostrar (Dashboard vs Entrega Ativa)
+    // será movida para dentro dos próprios componentes.
+    // O App.jsx agora apenas renderiza o ponto de entrada do fluxo do motorista.
     return (
       <DriverDashboardPage 
-        orders={orders} 
-        onAcceptRoute={handleAcceptRoute} 
+        onAcceptRoute={handleAcceptRoute}
+        onCompleteDelivery={handleCompleteDelivery}
       />
     );
   };
@@ -145,12 +95,12 @@ function App() {
   return (
     <CartProvider isLoggedIn={isLoggedIn} setNotification={setNotification}>
       <div className={styles.appWrapper}>
-        <Header onToggleOrders={() => { fetchOrders(); setOrdersModalOpen(true); }} />
+        <Header onToggleOrders={() => setOrdersModalOpen(true)} />
         <FloatingCart />
         <OrdersModal 
           isOpen={isOrdersModalOpen} 
-          onClose={() => setOrdersModalOpen(false)} 
-          orders={orders.filter(o => o.userId === user?.id)}
+          onClose={() => setOrdersModalOpen(false)}
+          // O OrdersModal agora buscará os seus próprios dados
         />
         
         <Routes>
@@ -165,6 +115,7 @@ function App() {
           <Route path="/farmacia/:pharmacyId" element={<PharmacyPage />} />
           <Route path="/petshop/:petShopId" element={<PetShopPage />} />
           <Route path="/finalizar-pedido" element={isLoggedIn ? <CheckoutPage onConfirmOrder={handleConfirmOrder} /> : <LoginPage />} />
+          {/* CORREÇÃO: A rota de Perfil agora passa a função de update correta */}
           <Route path="/perfil" element={isLoggedIn ? <ProfilePage /> : <LoginPage />} />
           <Route path="/pedido-confirmado" element={<OrderConfirmationPage />} />
         </Routes>

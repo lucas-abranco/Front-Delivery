@@ -3,29 +3,27 @@ import { useAuth } from './AuthContext'; // Importa o AuthContext para obter o t
 
 const API_URL = 'http://localhost:3000';
 
-// 1. Cria o Contexto
 export const CartContext = createContext();
 
-// 2. Cria o Hook (como o seu Canvas, o Header.jsx, o utiliza)
 export function useCart() {
   return useContext(CartContext);
 }
 
-// 3. O Provedor com a nova lógica de API
 export function CartProvider({ children, isLoggedIn, setNotification }) {
   const [cartItems, setCartItems] = useState([]);
   const [subtotal, setSubtotal] = useState('0.00');
   const [itemCount, setItemCount] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  // 1. NOVO ESTADO: Vamos guardar o ID da loja aqui
+  const [storeId, setStoreId] = useState(null); 
   
-  const { token } = useAuth(); // Obtém o token do contexto de autenticação
+  const { token } = useAuth();
 
-  const deliveryFee = 6.90; // Taxa de entrega fixa
+  const deliveryFee = 6.90;
 
-  // --- FUNÇÃO PARA BUSCAR O CARRINHO DA API ---
   const fetchCart = async () => {
     if (!token) {
-      setCartItems([]); // Se não há token, o carrinho está vazio
+      setCartItems([]);
       return;
     }
     try {
@@ -37,32 +35,48 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
       const data = await response.json();
       setCartItems(data.items);
       setSubtotal(data.subtotal);
+      
+      // 2. Tenta inferir o storeId a partir do back-end (embora ele não o envie)
+      //    A lógica principal será no addToCart
+      if (data.items.length > 0) {
+        // Esta é a limitação: a API não nos diz o storeId aqui.
+        // Vamos confiar no 'addToCart' para o definir.
+      } else {
+        setStoreId(null); // Limpa o ID da loja se o carrinho estiver vazio
+      }
     } catch (error) {
       console.error(error.message);
     }
   };
 
-  // Efeito que busca o carrinho da API assim que o utilizador faz login
   useEffect(() => {
     if (isLoggedIn && token) {
       fetchCart();
     } else {
-      setCartItems([]); // Limpa o carrinho se o utilizador fizer logout
+      setCartItems([]);
+      setStoreId(null); // Limpa o ID da loja no logout
     }
   }, [isLoggedIn, token]);
 
-  // Atualiza a contagem de itens sempre que o cartItems mudar
   useEffect(() => {
     setItemCount(cartItems.reduce((total, item) => total + item.quantity, 0));
   }, [cartItems]);
-
-  // --- FUNÇÕES DE API ---
 
   const addToCart = async (item) => {
     if (!token) {
       setNotification('Você precisa estar logado para adicionar itens.');
       return; 
     }
+    
+    // 3. LÓGICA DE LOJA ÚNICA
+    if (cartItems.length > 0 && storeId !== item.storeId) {
+      alert("Você só pode adicionar itens de um restaurante por vez. Limpe o seu carrinho para continuar.");
+      return;
+    }
+    
+    // 4. Guarda o ID da loja no momento em que o primeiro item é adicionado
+    setStoreId(item.storeId);
+
     try {
       const response = await fetch(`${API_URL}/cart/add`, {
         method: 'POST',
@@ -75,13 +89,35 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
       if (!response.ok) throw new Error('Falha ao adicionar item.');
       
       const data = await response.json();
-      setCartItems(data.items);
+      
+      // 5. Adiciona manualmente o storeId aos itens (porque o back-end não o envia)
+      const newCartItems = data.items.map(cartItem => ({
+        ...cartItem,
+        storeId: item.storeId // Adiciona o storeId que temos
+      }));
+
+      setCartItems(newCartItems);
       setSubtotal(data.subtotal);
     } catch (error) {
       console.error(error.message);
     }
   };
-
+  
+  // ... (funções removeFromCart, increaseQuantity, decreaseQuantity) ...
+  // Estas funções também precisam de ser atualizadas para usar a nova lógica
+  
+  const updateCartItems = (data) => {
+      const newCartItems = data.items.map(cartItem => ({
+        ...cartItem,
+        storeId: storeId // Mantém o storeId que já tínhamos
+      }));
+      setCartItems(newCartItems);
+      setSubtotal(data.subtotal);
+      if (newCartItems.length === 0) {
+        setStoreId(null); // Limpa o ID da loja se o carrinho ficar vazio
+      }
+  };
+  
   const removeFromCart = async (productId) => {
      try {
       const response = await fetch(`${API_URL}/cart/remove/${productId}`, {
@@ -89,10 +125,8 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error('Falha ao remover item.');
-      
       const data = await response.json();
-      setCartItems(data.items);
-      setSubtotal(data.subtotal);
+      updateCartItems(data);
     } catch (error) {
       console.error(error.message);
     }
@@ -101,7 +135,6 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
   const increaseQuantity = async (productId) => {
     const item = cartItems.find(i => i.id === productId);
     if (!item) return;
-    
     try {
       const response = await fetch(`${API_URL}/cart/update/${productId}`, {
         method: 'PUT',
@@ -112,10 +145,8 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
         body: JSON.stringify({ quantity: item.quantity + 1 }),
       });
       if (!response.ok) throw new Error('Falha ao atualizar quantidade.');
-      
       const data = await response.json();
-      setCartItems(data.items);
-      setSubtotal(data.subtotal);
+      updateCartItems(data);
     } catch (error) {
       console.error(error.message);
     }
@@ -124,13 +155,10 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
   const decreaseQuantity = async (productId) => {
     const item = cartItems.find(i => i.id === productId);
     if (!item) return;
-
-    // Se a quantidade for 1, remove o item
     if (item.quantity <= 1) {
       await removeFromCart(productId);
       return;
     }
-    
     try {
       const response = await fetch(`${API_URL}/cart/update/${productId}`, {
         method: 'PUT',
@@ -141,10 +169,8 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
         body: JSON.stringify({ quantity: item.quantity - 1 }),
       });
       if (!response.ok) throw new Error('Falha ao atualizar quantidade.');
-      
       const data = await response.json();
-      setCartItems(data.items);
-      setSubtotal(data.subtotal);
+      updateCartItems(data);
     } catch (error) {
       console.error(error.message);
     }
@@ -158,6 +184,7 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
       });
       setCartItems([]);
       setSubtotal('0.00');
+      setStoreId(null); // Limpa o ID da loja
     } catch (error) {
       console.error(error.message);
     }
@@ -172,6 +199,7 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
   const value = {
     cartItems,
     isCartOpen,
+    storeId, // 6. Exporta o storeId
     addToCart,
     removeFromCart,
     increaseQuantity,
@@ -182,8 +210,8 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
     subtotal,
     deliveryFee,
     finalTotal,
-    isLoggedIn, // Passa o estado de login
-    setNotification, // Passa a função de notificação
+    isLoggedIn,
+    setNotification,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

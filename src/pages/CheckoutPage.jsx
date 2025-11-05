@@ -1,32 +1,43 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CartContext } from '../contexts/CartContext';
+import { CartContext, useCart } from '../contexts/CartContext'; // Importar o CartContext e o hook
 import styles from './CheckoutPage.module.css';
 import AddressModal from '../components/AddressModal/AddressModal';
 import PaymentModal from '../components/PaymentModal/PaymentModal';
 
+// Recebe a função 'onConfirmOrder' vinda do App.jsx
 function CheckoutPage({ onConfirmOrder }) {
-  const { cartItems, subtotal, deliveryFee, finalTotal, clearCart } = useContext(CartContext);
+  // Obtém os dados do carrinho (da API) e a função clearCart
+  const { cartItems, subtotal, deliveryFee, finalTotal, clearCart } = useCart();
   const navigate = useNavigate();
   
-  const [address, setAddress] = useState('Rua Barão, 321');
+  const [address, setAddress] = useState('Rua Barão, 321'); // Endereço de exemplo
   const [payment, setPayment] = useState({ type: 'PIX' });
   
   const [isAddressModalOpen, setAddressModalOpen] = useState(false);
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const handleConfirm = () => {
-    const newOrder = {
-      restaurant: 'Restaurante Exemplo',
-      items: cartItems.map(item => ({
-        name: `${item.quantity}x ${item.name}`,
-        price: (parseFloat(item.price.replace(',', '.')) * item.quantity).toFixed(2),
-      })),
-      total: finalTotal,
-      deliveryAddress: address, // Envia o endereço de entrega
+    // 1. O nosso back-end (POST /orders) espera receber o storeId, o endereço e a taxa.
+    //    Vamos assumir que todos os itens no carrinho são da mesma loja.
+    const storeId = cartItems.length > 0 ? cartItems[0].storeId : null;
+    
+    if (!storeId) {
+        alert("Erro: Carrinho vazio ou não foi possível identificar a loja.");
+        return;
+    }
+
+    // 2. Monta o objeto 'orderData' que o App.jsx espera
+    const orderData = {
+      storeId: storeId,
+      deliveryAddress: address,
+      deliveryFee: parseFloat(deliveryFee), // Garante que é um número
     };
     
-    onConfirmOrder(newOrder);
+    // 3. Chama a função do App.jsx para enviar o pedido à API
+    onConfirmOrder(orderData);
+
+    // 4. Limpa o carrinho (agora via API) e navega para a página de sucesso
     clearCart();
     navigate('/pedido-confirmado');
   };
@@ -73,6 +84,7 @@ function CheckoutPage({ onConfirmOrder }) {
               <div className={styles.summaryLine}><span>Taxa de entrega</span><span>R$ {deliveryFee.toFixed(2)}</span></div>
               <div className={`${styles.summaryLine} ${styles.total}`}><span>Total</span><span>R$ {finalTotal}</span></div>
             </div>
+            {/* O botão 'Confirmar pedido' agora chama a função handleConfirm */}
             <button onClick={handleConfirm} className={styles.confirmButton}>Confirmar pedido</button>
           </div>
         </div>
@@ -81,4 +93,3 @@ function CheckoutPage({ onConfirmOrder }) {
   );
 }
 export default CheckoutPage;
-

@@ -1,4 +1,9 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext'; // Importar o hook de Autenticação
 import styles from './DriverDashboardPage.module.css';
+
+// URL da nossa API de back-end
+const API_URL = 'http://localhost:3000';
 
 // Componente para exibir um único cartão de rota
 function RouteCard({ order, onAcceptRoute }) {
@@ -10,27 +15,60 @@ function RouteCard({ order, onAcceptRoute }) {
   return (
     <div className={styles.routeCard}>
       <div className={styles.routeInfo}>
-        {/* CORREÇÃO: Removido o endereço de recolha */}
         <div>
-          <span className={styles.label}>ENDEREÇO DE ENTREGA</span>
-          {/* Garante que o endereço do cliente seja exibido */}
+          <span className={styles.label}>ENTREGA</span>
           <p>{order.deliveryAddress || 'Endereço não informado'}</p>
         </div>
       </div>
       <div className={styles.routeDetails}>
         <span>{distance} km</span>
         <span className={styles.payment}>{`R$ ${payment} - ${time} min`}</span>
-        {/* Passa o objeto do pedido inteiro ao ser aceite */}
-        <button onClick={() => onAcceptRoute(order)} className={styles.acceptButton}>Aceitar rota</button>
+        {/* Passa o ID do pedido ao ser aceite */}
+        <button onClick={() => onAcceptRoute(order.id)} className={styles.acceptButton}>Aceitar rota</button>
       </div>
     </div>
   );
 }
 
 // A página principal do painel do entregador
-function DriverDashboardPage({ orders, onAcceptRoute }) {
-  // Filtra apenas os pedidos que estão "Em andamento" e ainda não têm um entregador associado
-  const availableOrders = orders.filter(order => order.status === 'Em andamento' && !order.driverId);
+function DriverDashboardPage({ onAcceptRoute }) {
+  const { token } = useAuth(); // Obtém o token para a chamada de API
+  const [availableOrders, setAvailableOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Função para buscar os pedidos disponíveis na API
+  const fetchAvailableOrders = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/orders/available`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Falha ao buscar pedidos disponíveis.');
+      
+      const data = await response.json();
+      setAvailableOrders(data);
+    } catch (error) {
+      console.error(error.message);
+    }
+    setLoading(false);
+  };
+
+  // Busca os pedidos quando o componente carrega (e sempre que o token mudar)
+  useEffect(() => {
+    if (token) {
+      fetchAvailableOrders();
+    }
+  }, [token]);
+
+  // Função para lidar com a aceitação e atualizar a lista
+  const handleAccept = async (orderId) => {
+    await onAcceptRoute(orderId); // Chama a função do App.jsx para atualizar o back-end
+    fetchAvailableOrders(); // Atualiza a lista de pedidos disponíveis no front-end
+  };
+
+  if (loading) {
+    return <div className={styles.dashboardContainer}><p>A carregar rotas...</p></div>;
+  }
 
   return (
     <div className={styles.dashboardContainer}>
@@ -41,7 +79,7 @@ function DriverDashboardPage({ orders, onAcceptRoute }) {
       <div className={styles.routesList}>
         {availableOrders.length > 0 ? (
           availableOrders.map(order => (
-            <RouteCard key={order.id} order={order} onAcceptRoute={onAcceptRoute} />
+            <RouteCard key={order.id} order={order} onAcceptRoute={handleAccept} />
           ))
         ) : (
           <p>Nenhum pedido disponível no momento.</p>
@@ -52,4 +90,3 @@ function DriverDashboardPage({ orders, onAcceptRoute }) {
 }
 
 export default DriverDashboardPage;
-

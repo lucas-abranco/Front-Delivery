@@ -1,29 +1,29 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CartContext } from '../contexts/CartContext';
-import styles from './FloatingCart.module.css';
+import { useCart } from '../contexts/CartContext';
+import styles from './FloatingCart.module.css'; // Assume que os estilos estão na subpasta
 
 function FloatingCart() {
-  // Obter isLoggedIn e setNotification do contexto
   const { 
     isCartOpen, 
     cartItems, 
     removeFromCart, 
+    increaseQuantity, // Função que faltava
+    decreaseQuantity, // Função que faltava
     toggleCart, 
     itemCount, 
     subtotal,
     isLoggedIn,
     setNotification
-  } = useContext(CartContext);
+  } = useCart();
   
   const navigate = useNavigate();
 
   const handleCheckout = () => {
-    toggleCart(); // Fecha sempre o carrinho
+    toggleCart();
     if (isLoggedIn) {
-      navigate('/finalizar-pedido'); // Se estiver logado, vai para o checkout
+      navigate('/finalizar-pedido');
     } else {
-      // Se não, envia notificação e vai para o login
       setNotification('Você precisa estar logado para finalizar o pedido.');
       navigate('/login');
     }
@@ -51,10 +51,18 @@ function FloatingCart() {
             cartItems.map(item => (
               <div key={item.id} className={styles.item}>
                 <div className={styles.itemDetails}>
-                  <span className={styles.itemName}>{item.quantity}x {item.name}</span>
-                  <span>R$ {(parseFloat(item.price.replace(',', '.')) * item.quantity).toFixed(2)}</span>
+                  <span className={styles.itemName}>{item.name}</span>
+                  {/* CORREÇÃO: Botões de quantidade adicionados */}
+                  <div className={styles.quantityControl}>
+                    <button onClick={() => decreaseQuantity(item.id)}>-</button>
+                    <span>{item.quantity}</span>
+                    <button onClick={() => increaseQuantity(item.id)}>+</button>
+                  </div>
                 </div>
-                <button onClick={() => removeFromCart(item.id)} className={styles.removeButton}>Remover</button>
+                <div className={styles.itemPriceInfo}>
+                  <span>R$ {(parseFloat(item.price.replace(',', '.')) * item.quantity).toFixed(2)}</span>
+                  <button onClick={() => removeFromCart(item.id)} className={styles.removeButton}>Remover</button>
+                </div>
               </div>
             ))
           )}
@@ -72,4 +80,3 @@ function FloatingCart() {
 }
 
 export default FloatingCart;
-

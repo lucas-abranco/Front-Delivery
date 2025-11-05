@@ -49,7 +49,7 @@ export function AuthProvider({ children }) {
       const profileData = await response.json();
       setUser(profileData);
       
-      // Lógica para diferenciar o tipo de utilizador (baseado na presença de 'vehicleType')
+      // Lógica para diferenciar o tipo de utilizador (baseado na presença de 'vehicleType' no back-end)
       const type = profileData.vehicleType ? 'driver' : 'client';
       setUserType(type);
       localStorage.setItem('userType', type);
@@ -70,10 +70,11 @@ export function AuthProvider({ children }) {
     });
 
     if (!response.ok) {
+      // Se o back-end retornar um erro (ex: 401), lança uma exceção
       throw new Error('Credenciais de cliente inválidas.');
     }
     const data = await response.json();
-    setToken(data.access_token);
+    setToken(data.access_token); // Atualiza o token no estado (o useEffect tratará do resto)
   };
   
   const register = async (userData) => {
@@ -84,13 +85,14 @@ export function AuthProvider({ children }) {
     });
     
     if (!response.ok) {
+        // Se o back-end retornar um erro (ex: 409 Conflict)
         const errorData = await response.json();
         throw new Error(errorData.message || 'Falha no registo.');
     }
     return response.json();
   };
 
-  // --- FUNÇÕES DE ENTREGADOR (NOVAS) ---
+  // --- FUNÇÕES DE ENTREGADOR ---
   const loginDriver = async (email, password) => {
     const response = await fetch(`${API_URL}/auth/driver/login`, {
       method: 'POST',
@@ -133,10 +135,10 @@ export function AuthProvider({ children }) {
     login,
     logout,
     register,
-    loginDriver,    // Exporta a nova função
-    registerDriver, // Exporta a nova função
+    loginDriver,
+    registerDriver,
   };
 
+  // Retorna o Provedor, que "envolve" a nossa aplicação e partilha os 'value'
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
