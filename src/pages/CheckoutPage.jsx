@@ -1,14 +1,13 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CartContext, useCart } from '../contexts/CartContext'; // Importar o CartContext e o hook
+import { useCart } from '../contexts/CartContext'; // Importar o hook useCart
 import styles from './CheckoutPage.module.css';
 import AddressModal from '../components/AddressModal/AddressModal';
 import PaymentModal from '../components/PaymentModal/PaymentModal';
 
-// Recebe a função 'onConfirmOrder' vinda do App.jsx
 function CheckoutPage({ onConfirmOrder }) {
   // Obtém os dados do carrinho (da API) e a função clearCart
-  const { cartItems, subtotal, deliveryFee, finalTotal, clearCart } = useCart();
+  const { cartItems, subtotal, deliveryFee, finalTotal, clearCart, storeId } = useCart();
   const navigate = useNavigate();
   
   const [address, setAddress] = useState('Rua Barão, 321'); // Endereço de exemplo
@@ -19,10 +18,8 @@ function CheckoutPage({ onConfirmOrder }) {
 
   const handleConfirm = () => {
     // 1. O nosso back-end (POST /orders) espera receber o storeId, o endereço e a taxa.
-    //    Vamos assumir que todos os itens no carrinho são da mesma loja.
-    const storeId = cartItems.length > 0 ? cartItems[0].storeId : null;
-    
-    if (!storeId) {
+    //    Usamos o 'storeId' guardado no contexto do carrinho.
+    if (!storeId || cartItems.length === 0) {
         alert("Erro: Carrinho vazio ou não foi possível identificar a loja.");
         return;
     }

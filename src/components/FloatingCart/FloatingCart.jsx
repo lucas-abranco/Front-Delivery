@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../contexts/CartContext';
+import { useCart } from '../../contexts/CartContext';
 import styles from './FloatingCart.module.css'; // Assume que os estilos estão na subpasta
 
 function FloatingCart() {

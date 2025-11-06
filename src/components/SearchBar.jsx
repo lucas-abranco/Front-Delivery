@@ -1,17 +1,32 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './SearchBar.module.css';
 
 function SearchBar() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  // A lógica de pesquisa agora vive dentro do próprio componente
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/restaurantes?q=${searchQuery}`);
+    }
+  };
+
   return (
-    <div className={styles.searchContainer}>
+    <form onSubmit={handleSearch} className={styles.searchContainer}>
       <input 
         type="text" 
-        placeholder="Endereço de entrega e número" 
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Encontre restaurantes, mercados e mais" 
         className={styles.searchInput}
       />
-      <button className={styles.searchButton}>
+      <button type="submit" className={styles.searchButton}>
         Buscar
       </button>
-    </div>
+    </form>
   );
 }
 

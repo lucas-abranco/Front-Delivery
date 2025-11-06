@@ -14,13 +14,14 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
   const [subtotal, setSubtotal] = useState('0.00');
   const [itemCount, setItemCount] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  // 1. NOVO ESTADO: Vamos guardar o ID da loja aqui
-  const [storeId, setStoreId] = useState(null); 
+  // 1. ESTADO-CHAVE: Guarda o ID da loja do pedido atual
+  const [storeId, setStoreId] = useState(localStorage.getItem('cartStoreId') || null);
   
   const { token } = useAuth();
 
   const deliveryFee = 6.90;
 
+  // Função para buscar o carrinho da API
   const fetchCart = async () => {
     if (!token) {
       setCartItems([]);
@@ -33,17 +34,19 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
       if (!response.ok) throw new Error('Falha ao buscar carrinho.');
       
       const data = await response.json();
+      
+      // 2. Tenta inferir o storeId a partir dos itens (se o back-end o enviar)
+      //    Se não, mantém o que está no localStorage
+      if (data.items.length > 0 && data.items[0].storeId) {
+        setStoreId(data.items[0].storeId);
+        localStorage.setItem('cartStoreId', data.items[0].storeId);
+      } else if (data.items.length === 0) {
+        setStoreId(null);
+        localStorage.removeItem('cartStoreId');
+      }
+      
       setCartItems(data.items);
       setSubtotal(data.subtotal);
-      
-      // 2. Tenta inferir o storeId a partir do back-end (embora ele não o envie)
-      //    A lógica principal será no addToCart
-      if (data.items.length > 0) {
-        // Esta é a limitação: a API não nos diz o storeId aqui.
-        // Vamos confiar no 'addToCart' para o definir.
-      } else {
-        setStoreId(null); // Limpa o ID da loja se o carrinho estiver vazio
-      }
     } catch (error) {
       console.error(error.message);
     }
@@ -54,7 +57,8 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
       fetchCart();
     } else {
       setCartItems([]);
-      setStoreId(null); // Limpa o ID da loja no logout
+      setStoreId(null);
+      localStorage.removeItem('cartStoreId');
     }
   }, [isLoggedIn, token]);
 
@@ -68,14 +72,15 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
       return; 
     }
     
-    // 3. LÓGICA DE LOJA ÚNICA
+    // 3. LÓGICA DE LOJA ÚNICA: Verifica se o carrinho já tem itens de outra loja
     if (cartItems.length > 0 && storeId !== item.storeId) {
       alert("Você só pode adicionar itens de um restaurante por vez. Limpe o seu carrinho para continuar.");
       return;
     }
     
-    // 4. Guarda o ID da loja no momento em que o primeiro item é adicionado
+    // 4. Guarda o ID da loja no estado e no localStorage
     setStoreId(item.storeId);
+    localStorage.setItem('cartStoreId', item.storeId);
 
     try {
       const response = await fetch(`${API_URL}/cart/add`, {
@@ -89,33 +94,21 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
       if (!response.ok) throw new Error('Falha ao adicionar item.');
       
       const data = await response.json();
-      
-      // 5. Adiciona manualmente o storeId aos itens (porque o back-end não o envia)
-      const newCartItems = data.items.map(cartItem => ({
-        ...cartItem,
-        storeId: item.storeId // Adiciona o storeId que temos
-      }));
-
-      setCartItems(newCartItems);
+      setCartItems(data.items);
       setSubtotal(data.subtotal);
     } catch (error) {
       console.error(error.message);
     }
   };
   
-  // ... (funções removeFromCart, increaseQuantity, decreaseQuantity) ...
-  // Estas funções também precisam de ser atualizadas para usar a nova lógica
-  
-  const updateCartItems = (data) => {
-      const newCartItems = data.items.map(cartItem => ({
-        ...cartItem,
-        storeId: storeId // Mantém o storeId que já tínhamos
-      }));
-      setCartItems(newCartItems);
-      setSubtotal(data.subtotal);
-      if (newCartItems.length === 0) {
-        setStoreId(null); // Limpa o ID da loja se o carrinho ficar vazio
-      }
+  // Função auxiliar para atualizar o estado após uma modificação
+  const handleCartUpdate = (data) => {
+    setCartItems(data.items);
+    setSubtotal(data.subtotal);
+    if (data.items.length === 0) {
+      setStoreId(null); // Limpa o ID da loja se o carrinho ficar vazio
+      localStorage.removeItem('cartStoreId');
+    }
   };
   
   const removeFromCart = async (productId) => {
@@ -126,7 +119,7 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
       });
       if (!response.ok) throw new Error('Falha ao remover item.');
       const data = await response.json();
-      updateCartItems(data);
+      handleCartUpdate(data);
     } catch (error) {
       console.error(error.message);
     }
@@ -138,15 +131,12 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
     try {
       const response = await fetch(`${API_URL}/cart/update/${productId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ quantity: item.quantity + 1 }),
       });
       if (!response.ok) throw new Error('Falha ao atualizar quantidade.');
       const data = await response.json();
-      updateCartItems(data);
+      handleCartUpdate(data);
     } catch (error) {
       console.error(error.message);
     }
@@ -162,15 +152,12 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
     try {
       const response = await fetch(`${API_URL}/cart/update/${productId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ quantity: item.quantity - 1 }),
       });
       if (!response.ok) throw new Error('Falha ao atualizar quantidade.');
       const data = await response.json();
-      updateCartItems(data);
+      handleCartUpdate(data);
     } catch (error) {
       console.error(error.message);
     }
@@ -184,7 +171,8 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
       });
       setCartItems([]);
       setSubtotal('0.00');
-      setStoreId(null); // Limpa o ID da loja
+      setStoreId(null);
+      localStorage.removeItem('cartStoreId');
     } catch (error) {
       console.error(error.message);
     }
@@ -199,7 +187,7 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
   const value = {
     cartItems,
     isCartOpen,
-    storeId, // 6. Exporta o storeId
+    storeId, // Exporta o ID da loja
     addToCart,
     removeFromCart,
     increaseQuantity,
@@ -216,4 +204,3 @@ export function CartProvider({ children, isLoggedIn, setNotification }) {
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
-

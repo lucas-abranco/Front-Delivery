@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import styles from './RestaurantPage.module.css';
 import { CartContext } from '../contexts/CartContext';
-import ProductModal from '../components/ProductModal.jsx';
+import ProductModal from '../components/ProductModal/ProductModal.jsx';
 
 // URL da nossa API de back-end
 const API_URL = 'http://localhost:3000';
