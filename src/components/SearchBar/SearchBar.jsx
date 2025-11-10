@@ -10,6 +10,7 @@ function SearchBar() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      // Navega para a página de listagem com o termo de pesquisa
       navigate(`/restaurantes?q=${searchQuery}`);
     }
   };

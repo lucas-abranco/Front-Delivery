@@ -1,29 +1,32 @@
-import { useContext } from 'react';
+// Caminho: src/components/FloatingCart/FloatingCart.jsx
+import { useContext } from 'react'; // 1. Importar o useContext do React
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../../contexts/CartContext';
-import styles from './FloatingCart.module.css'; // Assume que os estilos estão na subpasta
+import { CartContext } from '../../contexts/CartContext'; // 2. Importar o CartContext diretamente
+import styles from './FloatingCart.module.css';
 
 function FloatingCart() {
+  // 3. Usar o useContext(CartContext) em vez do useCart()
   const { 
     isCartOpen, 
     cartItems, 
     removeFromCart, 
-    increaseQuantity, // Função que faltava
-    decreaseQuantity, // Função que faltava
+    increaseQuantity,
+    decreaseQuantity,
     toggleCart, 
     itemCount, 
     subtotal,
     isLoggedIn,
     setNotification
-  } = useCart();
+  } = useContext(CartContext);
   
   const navigate = useNavigate();
 
   const handleCheckout = () => {
-    toggleCart();
+    toggleCart(); // Fecha sempre o carrinho
     if (isLoggedIn) {
-      navigate('/finalizar-pedido');
+      navigate('/finalizar-pedido'); // Se estiver logado, vai para o checkout
     } else {
+      // Se não, envia notificação e vai para o login
       setNotification('Você precisa estar logado para finalizar o pedido.');
       navigate('/login');
     }
@@ -52,7 +55,6 @@ function FloatingCart() {
               <div key={item.id} className={styles.item}>
                 <div className={styles.itemDetails}>
                   <span className={styles.itemName}>{item.name}</span>
-                  {/* CORREÇÃO: Botões de quantidade adicionados */}
                   <div className={styles.quantityControl}>
                     <button onClick={() => decreaseQuantity(item.id)}>-</button>
                     <span>{item.quantity}</span>

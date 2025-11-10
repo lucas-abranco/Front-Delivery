@@ -1,10 +1,12 @@
+// Caminho: src/pages/ProfilePage.jsx
 import { useState, useEffect } from 'react';
 import styles from './ProfilePage.module.css';
 import { useAuth } from '../contexts/AuthContext'; // 1. Importar o hook de Autenticação
 
-// A página agora recebe apenas a função 'onUpdate' do App.jsx
-function ProfilePage({ onUpdate }) {
-  const { user } = useAuth(); // 2. Obter os dados do utilizador logado do AuthContext
+// A página já não recebe 'props' (como 'user' ou 'onUpdate')
+function ProfilePage() {
+  // 2. Obter o 'user' E a função 'updateProfile' diretamente do AuthContext
+  const { user, updateProfile } = useAuth(); 
 
   const [formData, setFormData] = useState({
     name: '',
@@ -32,7 +34,8 @@ function ProfilePage({ onUpdate }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  // 4. O handleSubmit agora é 'async' para poder chamar a API
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
 
@@ -41,13 +44,28 @@ function ProfilePage({ onUpdate }) {
       return;
     }
 
-    const success = onUpdate(formData); // A lógica de 'onUpdate' ainda é gerida pelo App.jsx
+    try {
+      // 5. Prepara os dados a serem enviados para a API
+      const dataToUpdate = {
+        name: formData.name,
+        email: formData.email,
+      };
+      
+      // Só envia os campos de senha se o utilizador preencheu uma nova senha
+      if (formData.newPassword) {
+        dataToUpdate.currentPassword = formData.currentPassword;
+        dataToUpdate.newPassword = formData.newPassword;
+      }
 
-    if (success) {
+      // 6. Chama a função 'updateProfile' do AuthContext (que fala com o back-end)
+      await updateProfile(dataToUpdate);
+      
       setMessage({ type: 'success', text: 'Dados atualizados com sucesso!' });
       setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
-    } else {
-      setMessage({ type: 'error', text: 'A senha atual está incorreta.' });
+    
+    } catch (err) {
+      // 7. Captura o erro do back-end (ex: senha atual incorreta)
+      setMessage({ type: 'error', text: err.message || 'Falha ao atualizar perfil.' });
     }
   };
 
@@ -76,7 +94,7 @@ function ProfilePage({ onUpdate }) {
           <h4>Alterar Senha</h4>
           <div className={styles.inputGroup}>
             <label htmlFor="currentPassword">Senha Atual</label>
-            <input type="password" id="currentPassword" name="currentPassword" value={formData.currentPassword} onChange={handleChange} />
+            <input type="password" id="currentPassword" name="currentPassword" placeholder="Apenas se for alterar a senha" value={formData.currentPassword} onChange={handleChange} />
           </div>
           <div className={styles.inputGroup}>
             <label htmlFor="newPassword">Nova Senha</label>
@@ -95,4 +113,3 @@ function ProfilePage({ onUpdate }) {
 }
 
 export default ProfilePage;
-

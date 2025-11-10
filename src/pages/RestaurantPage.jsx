@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import styles from './RestaurantPage.module.css';
-import { CartContext } from '../contexts/CartContext';
+import { CartContext, useCart } from '../contexts/CartContext'; // Importar o Contexto e o hook
+// import { pizzeriaMenu } from '../data/pizzeriaMenu.js'; // REMOVIDO
 import ProductModal from '../components/ProductModal/ProductModal.jsx';
 
-// URL da nossa API de back-end
 const API_URL = 'http://localhost:3000';
 
 // Componente para um item individual do menu
 function MenuItem({ item, onSelect }) {
-    const { addToCart } = useContext(CartContext); // Obtém a função de adicionar ao carrinho
+    const { addToCart } = useCart(); // Obtém a função de adicionar ao carrinho
     
     return (
         // Clicar no card inteiro abre o modal
@@ -53,7 +53,18 @@ function RestaurantPage() {
           throw new Error('Falha ao buscar dados do restaurante.');
         }
         const data = await response.json();
-        setStoreData(data); // Guarda os dados no estado
+        
+        // CORREÇÃO DE BUG: Adiciona o storeId a cada item
+        // Isto é crucial para que o CartContext saiba de qual loja o item é
+        const menuWithStoreId = data.menu.map(category => ({
+          ...category,
+          items: category.items.map(item => ({
+            ...item,
+            storeId: data.id // Adiciona o ID da loja ao item
+          }))
+        }));
+        
+        setStoreData({ ...data, menu: menuWithStoreId }); // Guarda os dados da API no estado
       } catch (error) {
         console.error(error.message);
       }
@@ -103,9 +114,9 @@ function RestaurantPage() {
             </section>
           ))}
         </div>
+        {/* REMOVIDO: O <aside> com o <Cart /> estático foi removido */}
       </main>
     </>
   );
 }
 export default RestaurantPage;
-

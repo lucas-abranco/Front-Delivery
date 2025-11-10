@@ -1,11 +1,12 @@
+// Caminho: src/App.jsx
 import { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
-// Caminho corrigido para a sua estrutura de ficheiros
+// Caminhos corrigidos para corresponder à sua estrutura de pastas
 import FloatingCart from './components/FloatingCart/FloatingCart.jsx'; 
-import OrdersModal from './components/OrdersModal/OrdersModal';
-import Header from './components/Header';
+import OrdersModal from './components/OrdersModal/OrdersModal.jsx';
+import Header from './components/header/Header.jsx';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import LoginDriverPage from './pages/LoginDriverPage';
@@ -21,19 +22,17 @@ import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
 import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import styles from './App.module.css';
+// Mocks de dados (como 'ordersData' e 'restaurants') foram removidos.
 
 // A URL base da nossa API de back-end
 const API_URL = 'http://localhost:3000';
 
 function App() {
-  // A lógica de autenticação (isLoggedIn, userType, user, token)
-  // vem agora do nosso hook useAuth()
   const { isLoggedIn, userType, user, token } = useAuth();
-  const navigate = useNavigate();
+ 
   
   const [notification, setNotification] = useState('');
-  // O estado dos pedidos é gerido aqui, mas é preenchido pela API
-  const [orders, setOrders] = useState([]); 
+  const [orders, setOrders] = useState([]); // Começa vazio, será preenchido pela API
   const [isOrdersModalOpen, setOrdersModalOpen] = useState(false);
 
   // --- LÓGICA DE DADOS (API) ---
@@ -43,6 +42,7 @@ function App() {
     if (!token) return;
     
     let url = '';
+    // Define a URL da API com base no tipo de utilizador
     if (userType === 'client') {
       url = `${API_URL}/orders`; // Histórico do cliente
     } else if (userType === 'driver') {
@@ -63,16 +63,16 @@ function App() {
     }
   };
 
-  // Busca os pedidos sempre que o utilizador logado muda
+  // Efeito que busca os pedidos corretos quando o utilizador logado muda
   useEffect(() => {
     if (isLoggedIn && token) {
       fetchOrders();
     } else {
       setOrders([]); // Limpa os pedidos ao fazer logout
     }
-  }, [isLoggedIn, token, userType]);
+  }, [isLoggedIn, token, userType]); // Re-executa se o utilizador logado mudar
 
-  // Função para criar um novo pedido (passada para o Checkout)
+  // Função para criar um novo pedido via API (passada para o CheckoutPage)
   const handleConfirmOrder = async (orderData) => {
     try {
       const response = await fetch(`${API_URL}/orders`, {
@@ -121,6 +121,7 @@ function App() {
   
   // Define qual página o entregador vê
   const renderDriverPage = () => {
+    // Procura na lista de pedidos (vinda da API) se há uma entrega ativa
     const activeDelivery = orders.find(o => o.driverId === user?.id && o.status === 'Em rota de entrega');
     
     if (activeDelivery) {
@@ -132,9 +133,10 @@ function App() {
       );
     }
     
+    // Passa os pedidos disponíveis (da API) para o painel
     return (
       <DriverDashboardPage 
-        orders={orders} // Passa os pedidos disponíveis (da API)
+        orders={orders} 
         onAcceptRoute={handleAcceptRoute} 
       />
     );
@@ -144,7 +146,8 @@ function App() {
     // O CartProvider envolve a aplicação, passando o estado de login
     <CartProvider isLoggedIn={isLoggedIn} setNotification={setNotification}>
       <div className={styles.appWrapper}>
-        <Header onToggleOrders={() => { fetchClientOrders(); setOrdersModalOpen(true); }} />
+        {/* O Header já não recebe props de login, ele obtém do useAuth() */}
+        <Header onToggleOrders={() => { fetchOrders(); setOrdersModalOpen(true); }} /> 
         <FloatingCart />
         <OrdersModal 
           isOpen={isOrdersModalOpen} 
@@ -165,6 +168,7 @@ function App() {
           <Route path="/farmacia/:pharmacyId" element={<PharmacyPage />} />
           <Route path="/petshop/:petShopId" element={<PetShopPage />} />
           <Route path="/finalizar-pedido" element={isLoggedIn ? <CheckoutPage onConfirmOrder={handleConfirmOrder} /> : <LoginPage />} />
+          {/* O ProfilePage agora obtém o 'user' do useAuth() */}
           <Route path="/perfil" element={isLoggedIn ? <ProfilePage /> : <LoginPage />} />
           <Route path="/pedido-confirmado" element={<OrderConfirmationPage />} />
         </Routes>

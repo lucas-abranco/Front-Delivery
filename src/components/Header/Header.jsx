@@ -1,12 +1,12 @@
-import React, { useContext } from 'react';
+import React from 'react'; // O useContext e CartContext não são mais necessários
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
-import { useAuth } from '../contexts/AuthContext';
-import { CartContext } from '../contexts/CartContext';
+import { useAuth } from '../../contexts/AuthContext';
+// O CartContext não é mais importado aqui
 
 function Header({ onToggleOrders }) {
   const { isLoggedIn, userType, logout } = useAuth();
-  const { toggleCart, itemCount } = useContext(CartContext);
+  // toggleCart e itemCount foram removidos
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -30,19 +30,17 @@ function Header({ onToggleOrders }) {
           </div>
         );
       }
+      // CORREÇÃO: O botão "Carrinho" foi removido daqui
       return (
         <div className={styles.userActions}>
           <button onClick={onToggleOrders} className={`${styles.btn} ${styles.btnSecondary}`}>Pedidos</button>
-          <button onClick={toggleCart} className={styles.cartButton}>
-            Carrinho ({itemCount})
-          </button>
           <Link to="/perfil" className={`${styles.btn} ${styles.btnSecondary}`}>Perfil</Link>
           <button onClick={handleLogout} className={`${styles.btn} ${styles.btnSecondary}`}>Sair da conta</button>
         </div>
       );
     }
     
-    // 2. CORREÇÃO: Se estiver na página de login do CLIENTE
+    // 2. Se estiver na página de login do CLIENTE
     if (location.pathname === '/login') {
       return (
         <Link to="/login-entregador" className={`${styles.btn} ${styles.btnSecondary}`}>
@@ -73,4 +71,3 @@ function Header({ onToggleOrders }) {
   );
 }
 export default Header;
-

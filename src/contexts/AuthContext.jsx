@@ -1,3 +1,4 @@
+// Caminho: src/contexts/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Define a URL base da nossa API de back-end
@@ -6,12 +7,12 @@ const API_URL = 'http://localhost:3000';
 // Cria o Contexto
 const AuthContext = createContext();
 
-// Cria um "Hook" personalizado para facilitar o uso deste contexto noutros componentes
+// Cria um "Hook" personalizado para facilitar o uso deste contexto
 export function useAuth() {
   return useContext(AuthContext);
 }
 
-// Cria o "Provedor" que irá conter toda a lógica e partilhar os dados
+// Cria o "Provedor" que irá conter toda a lógica
 export function AuthProvider({ children }) {
   // Tenta ler os dados guardados no navegador ao iniciar
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -70,11 +71,10 @@ export function AuthProvider({ children }) {
     });
 
     if (!response.ok) {
-      // Se o back-end retornar um erro (ex: 401), lança uma exceção
       throw new Error('Credenciais de cliente inválidas.');
     }
     const data = await response.json();
-    setToken(data.access_token); // Atualiza o token no estado (o useEffect tratará do resto)
+    setToken(data.access_token);
   };
   
   const register = async (userData) => {
@@ -85,7 +85,6 @@ export function AuthProvider({ children }) {
     });
     
     if (!response.ok) {
-        // Se o back-end retornar um erro (ex: 409 Conflict)
         const errorData = await response.json();
         throw new Error(errorData.message || 'Falha no registo.');
     }
@@ -120,6 +119,28 @@ export function AuthProvider({ children }) {
     }
     return response.json();
   };
+  
+  // --- FUNÇÃO DE ATUALIZAÇÃO DE PERFIL (Geral) ---
+  const updateProfile = async (profileData) => {
+    if (!token) throw new Error('Não autenticado.');
+
+    const response = await fetch(`${API_URL}/auth/profile`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(profileData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Falha ao atualizar perfil.');
+    }
+    
+    await fetchUserProfile(token); // Busca o perfil atualizado
+    return await response.json();
+  };
 
   // --- FUNÇÃO DE LOGOUT (GERAL) ---
   const logout = () => {
@@ -137,8 +158,8 @@ export function AuthProvider({ children }) {
     register,
     loginDriver,
     registerDriver,
+    updateProfile,
   };
 
-  // Retorna o Provedor, que "envolve" a nossa aplicação e partilha os 'value'
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

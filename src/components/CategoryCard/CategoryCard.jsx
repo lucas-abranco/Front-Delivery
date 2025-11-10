@@ -1,9 +1,11 @@
+// Caminho: src/components/CategoryCard.jsx
 import styles from './CategoryCard.module.css';
 
 // O componente recebe "title" e "description" como propriedades (props)
 function CategoryCard({ title, description }) {
   return (
     <div className={styles.card}>
+      {/* Este placeholder será preenchido quando tivermos imagens */}
       <div className={styles.imagePlaceholder}></div>
       <div className={styles.content}>
         <h3 className={styles.title}>{title}</h3>
